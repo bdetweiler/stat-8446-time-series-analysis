@@ -53,7 +53,7 @@ $$
 If $X^*$ is a standardized $X$ and $Y^*$ is a standardized $Y$, then 
 $$
 \begin{split}
-  \rho &= [X^* Y^*]\\
+  \rho &= E[X^* Y^*]\\
 \end{split}
 $$
 
