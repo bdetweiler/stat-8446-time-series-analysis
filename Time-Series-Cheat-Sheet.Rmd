@@ -1,0 +1,187 @@
+---
+title: "Time Series Cheatsheet"
+author: "Brian Detweiler"
+date: "January 24, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Mean
+$$
+\begin{split}
+  E[X] &= \int_{-\infty}^{\infty} x f(x) dx \text{ for } \int_{-\infty}^{\infty} |x| f(x) dx < \infty, \text{ undefined otherwise }\\
+  \mu_t &= E[Y_t] \text{ for } t = 0, \pm 1, \pm 2, \hdots \\
+  E[aX + bY + c] &= aE[X] + bE[Y] + c\\
+  E[XY] &= \int_{-\infty}^{\infty} \int_{-\infty}^{\infty} xyf(x, y) dx dy\\
+\end{split}
+$$
+
+## Variance 
+
+$$
+\begin{split}
+  Var(X) &\geq 0 \text{ non-negative}\\
+  Var(a + bX) &= b^2 Var(X)\\
+  Var(X + Y) &= Var(X) + Var(Y) \text{ for independent } X, Y\\
+  Var(X) &= E[X^2] - \big(E[X]\big)^2\\
+\end{split}
+$$
+
+## Covariance 
+
+$$
+\begin{split}
+  Cov(a + bX, c + dY) &= bd Cov(X, Y)\\
+  Var(X + Y) &= Var(X) + Var(Y) + 2 Cov(X, Y)\\
+  Cov(X + Y, Z) &= Cov(X, Z) + Cov(Y, Z)\\
+  Cov(X, X) &= Var(X)\\
+  Cov(X, Y) &= Cov(Y, X)\\
+  Cov(X, Y) &= 0 \text{ for independent } X, Y\\
+  Cov(X, Y) &= E\big[(X - E[X])(Y - E[Y])\big]\\
+  &= E\big[(X - \mu_X)(Y - \mu_Y)]\\
+  &= E\big[XY - X E[Y] - Y E[X] + E[X] E[Y] \big]\\
+  &= E[XY] - E\big[X E[Y]\big] - E\big[Y E[X]\big] + E\big[E[X]E[Y]\big]\\
+  &= E[XY] - E[X]E[Y]\\
+\end{split}
+$$
+
+## Correlation 
+
+If $X^*$ is a standardized $X$ and $Y^*$ is a standardized $Y$, then 
+$$
+\begin{split}
+  \rho &= [X^* Y^*]\\
+\end{split}
+$$
+
+Else, 
+$$
+\begin{split}
+  \rho &= Corr(X, Y) = \frac{Corr(X, Y)}{\sqrt{Var(X) Var(Y)}}\\
+\end{split}
+$$
+
+$$
+\begin{split}
+  -1 &\leq Corr(X, Y) \leq 1\\
+  Corr(a + bX, c + dY) &= sign(bd) Corr(X, Y)\\
+  Corr(X, Y) &= \pm 1 iff \exists a, b \text{ s.t. } P(Y = a + bX) = 1\\
+\end{split}
+$$
+
+## Events
+$$
+\begin{split}
+  e_i &= \text{event} i\\
+  Y_0 &= e_0\\
+  Y_t &= e_0 + e_1 + e_2 + \hdots + e_t\\
+\end{split}
+$$
+
+## Autocovariance
+
+$$
+\begin{split}
+  \gamma_{t, t} &= Var(Y_t)\\
+  \gamma_{t, s} &= \gamma_{s, t}\\
+  \big| \gamma_{t, s} \big| &\leq \sqrt{\gamma_{t,t} \gamma_{s, s}}\\
+\end{split}
+$$
+
+
+$$
+\begin{split}
+  \gamma_{t, s} &= Cov(Y_t, Y_s) \text{ for } t, s = 0, \pm 1, \pm 2, \hdots\\
+  Cov(X, Y) &= E\big[(X - \mu_X)(Y - \mu_Y)]\\
+  &= E[XY] - E[X]E[Y]\\
+\end{split}
+$$
+
+$$
+\begin{split}
+  Cov(Y_t, Y_s) &= E\big[(Y_t - \mu_t)(Y_s - \mu_s)\big] \\
+  &= E[Y_t Y_s] - \mu_t \mu_s\\
+\end{split}
+$$
+
+For stochastic process $e_1, e_2, \hdots$ with mean 0, variance $\sigma^2$,
+
+$$
+\begin{split}
+  \gamma_{t, t} &= Var(Y_t)\\
+  &= Var(\sum_{i = 1}^t e_i)\\
+  &= \sum_{i = 1}^t Var(e_i) \\
+  &= t \sigma^2\\
+  \gamma_{t, s} &= Cov(Y_t, Y_s) \\
+  &= Cov(e_1 + e_2 + \hdots + e_t, e_1, e_2, \hdots + e_s)\\
+  &= Cov\big( [\sum_{i = 1}^n c_i Y_{t_i}, \sum_{j = 1}^n d_j Y_{s_j}] \big) \\
+  &= \sum_{i = 1}^m \sum_{j = 1}^n c_i d_j Cov(Y_{t_i}, Y_{s_j})\\
+  &= \sum_{i = 1}^t \sum_{j = 1}^s Cov(e_i, e_j) \text{ (when } i = j \text{, you get variance, when } i \neq j \text{ you get 0)}\\
+  &\text{ for } 1 \leq t \leq s\\
+  &= t \sigma^2\\
+\end{split}
+$$
+
+If $c_1, c_2, \hdots, c_m$ and $d_1, d_2, \hdots, d_n$ are constants and $t_1, t_2, \hdots, t_m$ and $s_1, s_2, \hdots, s_n$ are time points, then
+
+$$
+\begin{split}
+  Cov \Bigg[ \sum_{i = 1}^m c_i Y_{t_i}, \sum_{j = 1}^n d_j Y_{s_j} \Bigg] &=  \sum_{i = 1}^m c_i d_j Cov(Y_{t_i}, Y_{s_j}) \\
+\end{split}
+$$
+
+### Special case
+$$
+\begin{split}
+  Var \Bigg[ \sum_{i = 1}^n c_i Y_{t_i} \Bigg] &= \sum_{i = 1}^n c_i^2 Var(Y_{t_i}) + 2 \sum_{i = 2}^n \sum_{j = 1}^{i - 1} c_i c_j Cov(Y_{t_i}, Y_{t_j})\\
+\end{split}
+$$
+
+## Autocorrelation
+
+$$
+\begin{split}
+  \rho_{t, t} &= 1\\
+  \rho_{t, s} &= \rho_{s, t}\\
+  \big| \rho_{t, s} \big| &\leq 1\\
+\end{split}
+$$
+
+$$
+\begin{split}
+  \rho_{t, s} &= \frac{\gamma_{t, s}}{\sqrt{\gamma_{t,t}, \gamma_{s,s}}}\\
+\end{split}
+$$
+
+
+## Strictly Stationary
+
+The joint distribution of $Y_{t_1}, Y_{t_2}, \hdots, Y_{t_n}$ is the same as $Y_{t_1 - k}, Y_{t_2 - k}, \hdots, Y_{t_n - k} \forall t_i, i = 1, 2, \hdots, n$ and lag $k$. Also, $Var(Y_{t}) = Var(Y_{t - k})$ (constant variance over time).
+
+$Cov(Y_{t - k}, Y_{s - k}) \forall t, s$ and $k$. Putting $k = s$ and $k = t$, we get
+
+$$
+\begin{split}
+  \gamma_{t, s}  &= Cov(Y_{t - s}, Y_0) \\
+  &= Cov(Y_0, Y_{s - t})\\
+  &= Cov(Y_0, Y_{|t - s|})\\
+  &= \gamma_{0, |t - s|}\\
+  \gamma_k &= Cov(Y_t, Y_{t - k})\\
+  \rho_{k} &= Corr(Y_t, Y_{t - k})\\
+  \rho_k &= \frac{\gamma_{k}}{\gamma_0}\\
+  \gamma_0 &= Var(Y_t)\\
+  \gamma_k &= \gamma_{-k}\\
+  |\gamma_k| &\leq \gamma_0\\
+  \rho_0 &= 1\\
+  \rho_k &= \rho_{-k}\\
+  |\rho_k| &\leq 1\\
+\end{split}
+$$
+
+## Weakly Stationary
+
+1. Mean function is **constant over time**
+2. $\gamma_{t, t- k} = \gamma_{0, k}$ for all time t and lag k

@@ -1,0 +1,235 @@
+---
+title: "Homework 1"
+author: "Brian Detweiler"
+date: "January 12, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Given the gamma function $\Gamma(\alpha) = \int_{0}^{\infty} t^{\alpha - 1} e^{-t} dt$ and the properties
+## (a) $\Gamma(\alpha + 1) = \alpha \Gamma(\alpha)$ for $\alpha > 0$
+## (b) $\Gamma(n) = (n - 1)!$ for any integer $n > 0$
+## (c) $\Gamma(1) = 1$
+
+# please find out the variance for a random variable $X$ with pdf
+
+$$
+\begin{split}
+  f(x|\alpha, \beta) &= \frac{1}{\Gamma(\alpha) \beta^{\alpha}} x^{\alpha - 1} e^{-x / \beta}, \text{ } 0 < x < \infty, \alpha > 0, \beta > 0\\
+\end{split}
+$$
+
+\textbf{Answer: } We begin with the definition of expected value, $E[X] = \int_{-\infty}^{\infty} x f(x) dx$, and the definition of variance, $Var(X) = E[X^2] - \big(E[X]\big)^2$. First, we'll solve $E[X]$.
+
+$$
+\begin{split}
+  E[X] &= \int_{-\infty}^{\infty} x f(x) dx\\
+  &= \int_{0}^{\infty} x \frac{1}{\Gamma(\alpha)\beta^{\alpha}} x^{\alpha - 1} e^{-x / \beta} dx\\
+\end{split}
+$$
+
+We can pull out any term without an $x$ in it and combine like terms.
+
+$$
+\begin{split}
+  \int_{0}^{\infty} x \frac{1}{\Gamma(\alpha)\beta^{\alpha}} x^{\alpha - 1} e^{-x / \beta} dx &=   \frac{1}{\Gamma(\alpha)\beta^{\alpha}} \int_{0}^{\infty} x^{\alpha} e^{-x / \beta} dx \\
+\end{split}
+$$
+
+We can now make use of the fact that a valid PDF integrates to 1. Currently, the integrand is not a valid PDF, but we can turn it into one with a little creative manipulation.
+
+$$
+\begin{split}
+  \frac{1}{\Gamma(\alpha)\beta^{\alpha}} \int_{0}^{\infty} x^{\alpha} e^{-x / \beta} dx &= \frac{\Gamma(\alpha + 1) \beta^{\alpha + 1}}{\Gamma(\alpha)\beta^{\alpha}} \int_{0}^{\infty} \frac{1}{\Gamma(\alpha + 1) \beta^{\alpha + 1}} x^{\alpha} e^{-x / \beta} dx \\
+\end{split}
+$$
+
+Here, all we've done is multiplied by 1, but we've done so in a way that makes the integrand a valid PDF. Since we know that valid PDFs integrate to 1, the entire integral falls off and we are left with the leading term, which we can easily reduce using the properties of the Gamma function.
+
+$$
+\begin{split}
+  \frac{\Gamma(\alpha + 1) \beta^{\alpha + 1}}{\Gamma(\alpha)\beta^{\alpha}} &= \frac{\alpha \Gamma(\alpha) \beta{\alpha + 1}}{\Gamma(\alpha) \beta^{\alpha}} \\
+  &= \alpha \beta
+\end{split}
+$$
+
+Now we can evaluate the second moment, $E[X^2]$, in a similar fashion. 
+
+$$
+\begin{split}
+  E[X^2] &= \int_{-\infty}^{\infty} x^2 f(x) dx\\
+  &= \int_{0}^{\infty} x^2 \frac{1}{\Gamma(\alpha)\beta^{\alpha}} x^{\alpha - 1} e^{-x / \beta} dx\\
+  &=  \frac{1}{\Gamma(\alpha)\beta^{\alpha}} \int_{0}^{\infty} x^{\alpha + 1} e^{-x / \beta} dx \\
+  &= \frac{\Gamma(\alpha + 2) \beta^{\alpha + 2}}{\Gamma(\alpha)\beta^{\alpha}} \int_{0}^{\infty} \frac{1}{\Gamma(\alpha + 2) \beta^{\alpha + 2}} x^{\alpha + 1} e^{-x / \beta} dx \\
+  &= \frac{\Gamma(\alpha + 2) \beta^{\alpha + 2}}{\Gamma(\alpha) \beta^{\alpha}}\\
+  &= (\alpha + 1)(\alpha) \beta^2\\
+  &= (\alpha\beta)^2 + \alpha \beta^2\\
+\end{split}
+$$
+
+Applying the variance formula, we get
+
+$$
+\begin{split}
+  Var(X) &= E[X^2] - \big(E[X]\big)^2\\
+  &= (\alpha\beta)^2 + \alpha \beta^2 - \big(\alpha \beta\big)^2\\
+  &= \alpha \beta^2\\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. Let $Z_1$ and $Z_2$ be independent $N(0,1)$ random variables, and define new random variables $X$ and $Y$ by 
+
+$$
+\begin{split}
+  X = aZ_1 + bZ_2 + c &\text{ and } Y = uZ_1 + vZ_2 + w\\
+\end{split}
+$$
+
+# where $a, b, c, u, v, w$ are constants. Please show that
+$$
+\begin{split}
+  Var(X) &= a^2 + b^2\\
+  Var(Y) &= u^2 + v^2\\
+  Cov(X, Y) &= au + bv\\
+\end{split}
+$$
+
+Knowing that the variance of $Z_1$ and $Z_2$ exist and that $Z_1$ and $Z_2$ are independent, allowws us to utilize the property that $Var(a + bX) = b^2Var(X)$, we find
+
+$$
+\begin{split}
+  Var(X) &= Var(aZ_1 + bZ_2 + c)\\
+  &= Var(aZ_1) + Var(bZ_2) + Var(c)\\
+  &= a^2 Var(Z_1) + b^2 Var(Z_2) + 0\\
+\end{split}
+$$
+
+We are given the variance of $Z_1$ and $Z_2$ to be 1, and thus, $Var(X) = a^2 + b^2$. 
+
+We can just repeat this procedure with $Y$,
+
+$$
+\begin{split}
+  Var(Y) &= Var(uZ_1 + vZ_2 + w)\\
+  &= Var(uZ_1) + Var(vZ_2) + Var(w)\\
+  &= u^2 Var(Z_1) + v^2 Var(Z_2) + 0\\
+  &= u^2 + v^2\\
+\end{split}
+$$
+
+The definition of covariance is given by 
+
+$$
+\begin{split}
+  Cov(X, Y) &= E[XY] - E[X]E[Y]\\
+\end{split}
+$$
+
+We can easily find $E[X]$ and $E[Y]$ due to the independence of $Z_1$ and $Z_2$.
+
+$$
+\begin{split}
+  E[X] &= E[aZ_1 + bZ_2 + c] \\
+  &= aE[Z_1] + bE[Z_2] + E[c] \\
+\end{split}
+$$
+
+Since we know that $E[Z_1]$ and $[Z_2]$ are 0, the first two terms go away, and the expected value of a constant is just the constant, so we are left with $E[X] = c$. We can perform the same operations for $E[Y]$ and we end up with $E[Y] = w$.
+
+Now, expanding out $E[XY]$, we find
+
+$$
+\begin{split}
+  E[XY] &= E[(aZ_1 + bZ_2 + c)(uZ_1 + vZ_2 + w)] \\
+  &= E[a u Z_1^2 + a v Z_1 Z_2 + waZ_1 + b u Z_1 Z_2 + b v Z_2^2 + w b Z_2 + c u Z_1 + c v Z_2 + cw]\\
+\end{split}
+$$
+
+This looks unwieldy, but we can make use of independence, the properties of expected values, and the fact that $E[Z_1]$ and $E[Z_2]$ are 0. All of the single $Z_1$ and $Z_2$ terms are 0, and thus we are left with
+
+$$
+\begin{split}
+  E[XY] &= E[a u Z_1^2] + E[b v Z_2^2] + E[cw]\\
+  &= a u E[Z_1^2] + b v E[Z_2^2] + cw\\
+\end{split}
+$$
+
+Since we know the variance of $Z_1$ and $Z_2$ are 1, we can simply do algebra on the variance formulas,
+
+$$
+\begin{split}
+  Var(Z_1) &= E[Z_1^2] - \big(E[Z_1]\big)^2\\
+  &= E[Z_1^2] - 0\\
+  &= E[Z_1^2] \\
+  E[Z_1^2] &= 1\\
+  \\
+  Var(Z_2) &= E[Z_2^2] - \big(E[Z_2]\big)^2\\
+  &= E[Z_2^2] - 0\\
+  &= E[Z_2^2] \\
+  E[Z_2^2] &= 1\\
+\end{split}
+$$
+
+Now it is trivial to show,
+$$
+\begin{split}
+  E[XY] &= a u + b v + c w \\
+\end{split}
+$$
+
+and hence
+
+$$
+\begin{split}
+  Cov(X, Y) &= E[XY] - E[X]E[Y]\\
+  &= a u + b v + cw - cw \\
+  &= a u + b v
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Visit and explore the website for the \texttt{R} language: https:// www.r-project.org.
+
+## (a) Install the current version of \texttt{R} on your computer.
+## (b) If you have never used knitr before, please read the following materials, and install the knitr package on your computer.
+### i. \texttt{knitr}: Elegant, flexible and fast dynamic report generation with \texttt{R}. https://yihui.name/knitr/
+### ii. A Beginner's Tutorial for \texttt{knitr}. http://joshldavis.com/2014/04/12/beginners-tutorial-for-knitr/
+### iii. \LaTeX, Lyx, and \texttt{knitr}. http://faculty.washington.edu/gyollin/docs/Latex.pdf
+
+\pagebreak
+
+# 4. Textbook exercise 1.3
+## 1.3 Simulate a completely random process of length 48 with independent, normali values. Plot the time series plot. Does it look "random"? Repeat this exercise several times with new simulation each time.
+
+\textbf{Answer:} Below are four completely random processes sampled from a $N(0, 4)$. They do indeed look random.
+
+```{r, fig.height=4, fig.width=6}
+
+set.seed(0)
+
+rand.ts <- ts(rnorm(n = 144, mean = 0, sd = 4), frequency = 4, start = c(1959, 1))
+plot(rand.ts, ylab='Random Value', xlab='Year', type='o')
+
+rand.ts <- ts(rnorm(n = 144, mean = 0, sd = 4), frequency = 4, start = c(1959, 1))
+plot(rand.ts, ylab='Random Value', xlab='Year', type='o')
+
+rand.ts <- ts(rnorm(n = 144, mean = 0, sd = 4), frequency = 4, start = c(1959, 1))
+plot(rand.ts, ylab='Random Value', xlab='Year', type='o')
+
+rand.ts <- ts(rnorm(n = 144, mean = 0, sd = 4), frequency = 4, start = c(1959, 1))
+plot(rand.ts, ylab='Random Value', xlab='Year', type='o')
+```
