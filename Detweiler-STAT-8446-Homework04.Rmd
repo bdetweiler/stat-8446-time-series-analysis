@@ -1,0 +1,153 @@
+---
+title: "Homework 4"
+author: "Brian Detweiler"
+date: "February 22, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 1. Calculate and sketch the autocorrelation functions $\rho_k$ for the following stationary processes.
+
+## (a) $Y_t = -0.9 Y_{t - 1} + e_t$
+
+**Answer:**
+For this AR(1) model, we let $\phi = -0.9$, such that
+$$
+\begin{split}
+  Y_t &= \phi Y_{t - 1} + e_t \\
+  &= \phi (\phi Y_{t - 2 + e_{t - 1}}) + e_t \\
+  &= \phi (\phi (Y_{t - 3} + e_{t - 2}) + e_{t - 1}) + e_{t} \\
+  &= e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 e_{t - 3} \\
+\end{split}
+$$
+
+Continuing this expansion indefinitely we get
+$$
+\begin{split}
+  Y_t &= e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 e_{t - 3} + \hdots \\
+  \rho_k &= \phi^k, s.t. |\rho_k| \leq 1 \\
+\end{split}
+$$
+
+Substituting in our value of -0.9 for $\phi$, we get
+$$
+\begin{split}
+  \rho_k &= -0.9^k \\
+\end{split}
+$$
+
+Such an autocorrelation function might look like this:
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 15
+ACF <- ARMAacf(ar = c(-0.9), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
+## (b) $Y_t = 8 + e_t - 0.75 e_{t - 1} + 0.5 e_{t - 2} - 0.25 e_{t - 3}$
+
+**Answer:**
+
+Looking at this MA(3) model, we have
+
+$$
+\begin{split}
+  Y_t &= e_t - \theta_1 e_{t - 1} - \theta_2 e_{t - 2} - \theta_3 e_{t - 3} \\
+  \rho_k &= \begin{cases}
+    1 & \text{ if } k = 0 \\
+    \frac{- \theta_1 + \theta_1 \theta_2 + \theta_2 \theta_3}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} &\text{ for } k \pm 1 \\
+    \frac{- \theta_2 + \theta_2 \theta_3}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} &\text{ for } k \pm 2 \\
+    \frac{- \theta_3}{1 + \theta_1^2 + \theta_2^2 + \theta_3^2} &\text{ for } k \pm 3 \\
+  \end{cases}
+\end{split}
+$$
+
+Letting $\theta_1 = 0.75, \theta_2 = -0.5$ and $\theta_3 = 0.25$, we get
+
+$$
+\begin{split}
+  Y_t &= e_t - 0.75 e_{t - 1} - (-0.5) e_{t - 2} - 0.25 e_{t - 3} \\
+  \rho_k &= \begin{cases}
+    1 & \text{ if } k = 0 \\
+    \frac{- 0.75 + (0.75) (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 1 \\
+    \frac{- (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 2 \\
+    \frac{- (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 3 \\
+  \end{cases}
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. Verify that for an MA(1) process
+
+$$
+\begin{split}
+  max_{\theta} \rho_1 = 0.5 &\text{ and } min_{\theta} \rho_1 = -0.5 \\
+\end{split}
+$$
+
+# 3. Consider the ARMA(1, 2) model
+
+$$
+\begin{split}
+  Y_t = 0.7 Y_{t - 1} + e_t + 0.8 e_{t - 1} - 0.6 e_{t - 2} \\
+\end{split}
+$$
+
+# Assume that $\{e_t\}$ is a white noise process with zero mean and unit variance $(\sigma_e^2 = 1)$. Find the numerical values of $\rho_0, \rho_1$ and $\rho_2$ by hand. Also find a recursive relationship between $\rho_k$ and $\rho_{k - 1}$ for $k > 2$.
+
+
+**Answer:**
+
+# 4. Consider a "AR(1)" process satisfying $Y_t = \phi Y_{t - 1} + e_t$, where $t > 0$, $\phi$ can be any number and $\{e_t\}$ is a white noise process with zero mean and variance $\sigma_e^2$. Let $Y_0$ be a random variable with mean $\mu$ and variance $\sigma_0^2$. Show that for $t > 0$ we have 
+
+## (a) $Y_t = e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \hdots + \phi^{t - 1} e_1 + \phi^t Y_0$
+
+## (b) $E[Y_t] = \phi^t \mu$.
+
+## (c)
+$Var(Y_t) = \begin{cases} 
+              \frac{1 - \phi^{2t}}{1 - \phi^2} \sigma_e^2 + \phi^{2t} \sigma_0^2 & \text{ for } \phi \neq 1 \\ 
+              t \sigma_e^2 + \sigma_0^2 &\text{ for } \phi = 1 
+           \end{cases}$
+
+## (d) Suppose $\mu = 0$. Show that if $\{Y_t\}$ is stationary, then $Var(Y_t) = \frac{\sigma_e^2}{1 - \phi^2}$.
+
+# 5. The following command in \texttt{R} will plot the theoretical autocorrelation function of an ARMA(2, 2) model $Y_t = 0.5 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.7 e_{t - 1} - 0.6 e_{t - 2}$ for the first 15 lags:
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 15
+ACF <- ARMAacf(ar = c(0.5, 0.4), ma = c(-0.7, -0.6), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
+# Modify the code to generate the theoretical autocorrelation functions up to 20 lags of the following ARMA processes:
+
+## (a) MA(1) with $\theta = 0.5$
+
+## (b) MA(1) with $\theta = -0.5$
+
+## (c) MA(2) with $\theta_1 = \theta_2 = 0.1$
+
+## (d) AR(1) with $\phi = 0.4$
+
+## (e) AR(1) with $\phi = -0.4$
+
+## (f) AR(2) with $\phi_1 = 0.5$ and $\phi_2 = -0.9$
+
+## (g) ARMA(1, 1) with $\phi = 0.7$ and $\theta = 0.4$
+
+## (h) ARMA(1, 2) given in Question 3
+
+
