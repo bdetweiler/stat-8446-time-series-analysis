@@ -1,0 +1,67 @@
+\documentclass{article}
+
+\begin{document}
+
+<<>>=
+## AR(1)
+set.seed(214)
+phi = 0.6
+n = 100
+e = rnorm(n)
+y = e
+
+for(i in 2:n) {
+  y[i] = phi*y[i-1] + e[i]
+}
+
+#you can adjust the value inside y[(-1:30)] to see different acf graphs
+y = y[-1]
+plot(y, type = 'o')
+
+#r1
+plot(y[1:(n-2)],y[2:(n-1)])
+cor(y[1:(n-2)],y[2:(n-1)])
+
+#r2
+plot(y[1:(n-3)],y[3:(n-1)])
+cor(y[1:(n-3)],y[3:(n-1)])
+
+#Need to "burn in"
+
+#r1
+plot(y[1:(n-2)],y[2:(n-1)])
+cor(y[1:(n-2)],y[2:(n-1)])
+
+#r2
+plot(y[1:68],y[3:70])
+cor(y[1:68],y[3:70])
+
+acf(y)
+
+# AR(2)
+#assume Y1 = e1, Y2 = phi1Y1 + e2
+
+set.seed(214)
+phi1 = 1
+phi2 = -0.25
+n = 100
+e = rnorm(n)
+y = e
+y[2] = phi1*y[1] + e[1]
+for (i in 3:n) {
+  y[i] = phi1*y[i-1] + phi2*y[i-2]+e[i]
+}
+
+y = y[(-1:30)]
+plot(y, type= 'o')
+
+acf(y)
+
+
+## AR(p)
+?arima.sim
+#use this to simulate for an MA model or an AR model
+@
+
+
+\end{document}
