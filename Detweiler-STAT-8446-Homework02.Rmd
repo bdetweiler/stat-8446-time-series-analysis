@@ -1,0 +1,368 @@
+---
+title: "Homework Assignment 2"
+author: "Brian Detweiler"
+date: "January 31, 2017"
+header-includes:
+   - \usepackage{amsmath}
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Note: $\{e_t\}$ always denotes a sequence of independent, identically distributed random variables with mean zero and constant variance $\sigma^2$
+
+# 1. If $Y_t = e_t - e_{t - 7}$, show that $\{Y_t\}$ is (weakly) stationary and that, for $k > 0$, its autocorrelation function is nonzero only for lag $k = 7$.
+
+**Answer: **
+
+For stochastic process $\{Y_t\}$ to be weakly stationary, two properties must hold: The mean function must be zero, and the variance must be constant for any time window, $Y_{t, t - k}$, for all $t, k$.
+
+It is trivial to show that the mean function, $\mu_t = E[Y_t]$ is zero, due to independence.
+
+$$
+\begin{split}
+  E[Y_t] &= E[e_t - e_{t - 7}] \\
+  &= E[e_t] - E[e_{t - 7}]\\
+  &= 0 - 0 = 0
+\end{split}
+$$
+
+To show constant variance, we show the following identity:
+
+$$
+\begin{split}
+  \gamma_{t, s} &= Cov(Y_{t}, Y_{s}) \\
+  &= Cov(e_t - e_{t - 7}, e_s - e_{s - 7}) \\
+  &= Cov(e_t, e_s) - Cov(e_t, e_{s - 7}) - Cov(e_{t - 7}, e_{s}) + Cov(e_{t - 7}, e_{s - 7}) \\
+\end{split}
+$$
+
+If $t = s$, we have
+
+$$
+\begin{split}
+  \gamma_{s, s} &= Cov(Y_{s}, Y_{s}) \\
+  &= Cov(e_s, e_s) - Cov(e_s, e_{s - 7}) - Cov(e_{s - 7}, e_{s}) + Cov(e_{s - 7}, e_{s - 7}) \\
+  &= Var(e_s) - 0 - 0 + Var(e_{s - 7}) \\
+  &= \sigma^2 + \sigma^2 \\
+  &= 2 \sigma^2 \\
+\end{split}
+$$
+
+And if $t = s \pm 7$, we have
+
+$$
+\begin{split}
+  \gamma_{s + 7, s} &= Cov(Y_{s + 7}, Y_{s}) \\
+  &= Cov(e_{s + 7}, e_s) - Cov(e_{s + 7}, e_{s - 7}) - Cov(e_{s + 7 - 7}, e_{s}) + Cov(e_{s + 7 - 7}, e_{s - 7}) \\
+  &= 0 - 0 - Var(e_s, e_s) - 0 \\
+  &= - Var(e_s, e_s) \\
+  &= - \sigma^2 \\
+  \gamma_{s - 7, s} &= Cov(Y_{s - 7}, Y_{s}) \\
+  &= Cov(e_{s - 7}, e_s) - Cov(e_{s - 7}, e_{s - 7}) - Cov(e_{s - 7 - 7}, e_{s}) + Cov(e_{s - 7 - 7}, e_{s - 7}) \\
+  &= 0 - 0 - Var(e_{s - 7}, e_{s - 7}) - 0 \\
+  &= - Var(e_{s - 7}, e_{s - 7}) \\
+  &= - \sigma^2 \\
+\end{split}
+$$
+
+Thus, we identify three scenarios,
+
+$$
+\begin{split}
+  \begin{cases}
+    2 \sigma^2 &\text{ for } t = s\\
+    - \sigma^2 &\text{ for } t = s \pm 7\\
+    0 &\text{ otherwise } \\
+  \end{cases}
+\end{split}
+$$
+
+To show that the autocorrelation function is non-zero only for lag $k = 7$, we'll first show that it is in fact non-zero for lag $k = 7$. We again have three scenarios, as was shown previously.
+
+First, we'll find $\gamma_{t, t}$ and $\gamma_{s, s}$.
+
+$$
+\begin{split}
+  \gamma_{t, t} &= Cov(Y_{t}, Y_{t}) = Var(Y_{t}) \\
+  &= Var(e_{t} - e_{t - 7})\\
+  &= E[(e_{t} - e_{t - 7})(e_{t} - e_{t - 7})] - \big(E[e_{t} - e_{t - 7}]\big)^2\\
+  &= E[e_{t}^2 - e_{t} e_{t -7} + e_{t - 7} e_{t} + e_{t - 7}^2] \\
+  &= E[e_{t}^2 + e_{t - 7}^2] \\
+  &= E[e_{t}^2] + E[e_{t - 7}^2] \\
+  &= 2 \sigma^2 \\
+\end{split}
+$$
+
+The result is the same for $\gamma_{s, s}$. For $t = s$ we have
+
+$$
+\begin{split}
+  \rho_{t, s} &= \frac{\gamma_{t, s}}{\sqrt{\gamma_{t, t} \gamma_{s, s}}} \\
+  &= \frac{2 \sigma^2}{ \sqrt{2 \sigma^2 2 \sigma^2}} \\
+  &= \frac{2 \sigma^2}{ 2 \sigma^2} \\
+  &= 1 \\
+\end{split}
+$$
+
+For $t = s \pm 7$, we have
+$$
+\begin{split}
+  \rho_{t, s} &= \frac{\gamma_{t, s}}{\sqrt{\gamma_{t, t} \gamma_{s, s}}} \\
+  &= \frac{- \sigma^2}{ \sqrt{2 \sigma^2 2 \sigma^2}} \\
+  &= \frac{- \sigma^2}{ 2 \sigma^2} \\
+  &= -\frac{1}{2} \\
+\end{split}
+$$
+
+However, these are the only values for which lag $k = 7$. For any other value of $t$, lag $k \neq 7$, and thus, 
+$$
+\begin{split}
+  \rho_{t, s} &= \frac{\gamma_{t, s}}{\sqrt{\gamma_{t, t} \gamma_{s, s}}} \\
+  &= \frac{0}{ \sqrt{2 \sigma^2 2 \sigma^2}} \\
+  &= \frac{0}{ 2 \sigma^2} \\
+  &= 0 \\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+
+# 2. Suppose that $\{Y_t\}$ is (weakly) stationary with autocovariance function $\gamma_k$.
+
+## (a) Show that $W_t  = \nabla Y_t = Y_t - Y_{t - 1}$ is (weakly) stationary by finding the mean and autocovariance function for $\{W_t\}$.
+
+**Answer:**
+
+Since we are given that $Y_t$ is weakly stationary, then its mean function must be zero. Therefore,
+
+$$
+\begin{split}
+  E[W_t] &= E[\nabla Y_t] \\
+  &= E[Y_t - Y_{t - 1}] \\
+  &= E[Y_t] - E[Y_{t - 1}] \\
+  &= 0 - 0 = 0 \\
+\end{split}
+$$
+
+We are given that $Y_t$ has autocovariance function $\gamma_k = Cov(Y_t, Y_{t - k})$, so we can extend this to $Y_{t - 1}$ with autocovariance function $\gamma_{k - 1} = Cov(Y_{t - 1}, Y_{t - 1 - k})$.
+
+$$
+\begin{split}
+  Cov(Y_t, Y_{t - k}) &= Cov(Y_t - Y_{t - 1}, Y_{t - k} - Y_{t - 1 - k}) \\
+  &= Cov(Y_t, Y_{t - k}) - Cov(Y_t, Y_{t - 1 - k}) - Cov(Y_{t - 1}, Y_{t - k}) + Cov(Y_{t - 1}, Y_{t - 1 - k}) \\
+  &= \gamma_k - \gamma_{k + 1} - \gamma_{k - 1} + \gamma_{k} \\
+  &= 2 \gamma_k - \gamma_{k + 1} - \gamma_{k - 1} \\
+\end{split}
+$$
+
+Thus, the variance is constant for equal time windows and $W_t$ is weakly stationary.
+
+## (b) Show that $U_t = \nabla^2 Y_t = \nabla[\nabla Y_t] = \nabla [ Y_t - Y_{t - 1}] = Y_t - 2 Y_{t - 1} + Y_{t - 2}$ is (weakly) stationary.
+
+We have already shown that $W_t = \nabla Y_t$ is stationary. $U_t$ is simply the difference of two $W_t$ processes, and the difference of two stationary processes is also stationary. 
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. For a fixed positive integer $s$ and a constant $\alpha$, consider the stochastic process defined by $Y_t = e_t + \alpha e_{t - 1} + \alpha^2 e_{t - 2} + \cdots + \alpha^s e_{t - s}$.
+
+## (a) Show that the process is (weakly) stationary for any value of $\alpha$.
+
+The mean function is trivial due to independence,
+
+$$
+\begin{split}
+  E[Y_t] &= E[e_t] + \alpha E[e_{t - 1}] + \alpha^2 E[e_{t - 2}] + \cdots + \alpha^s E[e_{t - s}]\\
+  &= 0 + 0 + 0 + \cdots + 0 = 0
+\end{split}
+$$
+
+Autocovariance is given by
+
+$$
+\begin{split}
+  \gamma_{t, r} &= Cov(Y_t, Y_r) \\
+  &= Cov(e_t + \alpha e_{t - 1} + \alpha^2 e_{t - 2} + \cdots + \alpha^s e_{t - s}, e_r + \alpha e_{r - 1} + \alpha^2 e_{r - 2} + \cdots + \alpha^s e_{r - s}) \\
+  &= Cov\bigg(\sum_{i = 0}^s \alpha^i e_{t - i}, \sum_{j = 0}^s \alpha^j e_{t - j}\bigg) \\
+  &= \sum_{i = 0}^s \sum_{j = 0}^s \alpha^i \alpha^j Cov(e_{t - i}, e_{t - j}) \\
+  &= \sum_{i = 0}^s \sum_{j = 0}^s \alpha^i \alpha^j Cov(e_{t - i}, e_{t - j}) \\
+\end{split}
+$$
+
+Now, when $i = j$ we get $Cov(e_{t - i}, e_{t - j}) = \sigma^2$, and when $i \neq j$, we get 0. Thus, we get the following matrix,
+
+$$
+\begin{bmatrix}
+    \sigma^2 & 0 & 0 & \dots  & 0 \\
+    0 & \alpha^{2} \sigma^2 & 0 & \dots  & 0 \\
+    0 & 0 & \alpha^{4} \sigma^2 & 0 & \dots  & 0 \\
+    \vdots & \vdots & \vdots & \ddots & \vdots \\
+    0 & 0 & 0 & \dots & \alpha^{2s} \sigma^2
+\end{bmatrix}
+$$
+
+The summation over all of these leads to $\alpha^0 \sigma^2 + \alpha^2 \sigma^2 + \alpha^4 \sigma^2 + \hdots + \alpha^{2s} \sigma^2 = \sigma^2 \bigg( \sum_{i = 0}^s \alpha^{2s} \bigg)$.
+
+Thus for any value of $\alpha$ or $s$, the variance is the same for any time window $t, r$, and thus the process $\{Y_t\}$ is stationary.
+
+## (b) Find the autocorrelation function.
+
+Autocorrelation is given by $\rho_{t, r} = \frac{\gamma_{t, r}}{\sqrt{\gamma_{t, t} \gamma_{r, r}}}$.
+
+$$
+\begin{split}
+  \gamma_{t, t} &= Var(Y_t) \\
+  &= Var(e_t + \alpha e_{t - 1} + \alpha^2 e_{t - 2} + \hdots + \alpha^s e_{t - s}) \\
+  &= Var(e_t) + \alpha^2 Var(e_{t - 1}) + \alpha^4 Var(e_{t - 2}) + \hdots + \alpha^{2s} Var(e_{t - s}) \\
+  &= \sigma^2 + \alpha^2 \sigma^2 + \alpha^4 \sigma^2 + \hdots + \alpha^{2s} \sigma^2 \\
+  &= \sigma^2 \bigg( \sum_{i = 0}^s \alpha^{2s} \bigg) \\
+\end{split}
+$$
+
+The same holds for $\gamma_{r, r}$.
+
+So we have $\rho_{t, r} = \frac{\gamma_{t, r}}{\sqrt{\gamma_{t, t} \gamma_{r, r}}} \frac{\sigma^2 \bigg( \sum_{i = 0}^s \alpha^{2s} \bigg) \sigma^2}{\sqrt{\sigma^2 \bigg( \sum_{i = 0}^s \alpha^{2s} \bigg) \sigma^2 \bigg( \sum_{i = 0}^s \alpha^{2s} \bigg) }} = 1$.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 4. Let $\{ X_t \}$ be the time series of interest, however, due to measurement error we actually observe $Y_t = X_t + e_t$. We assume that $\{ X_t \}$ and $\{ e_t \}$ are independent processes. We call $X_t$ the signal, and $e_t$ the noise. If $\{ X_t \}$ is stationary with autocorrelation function $\rho_k$, show that $\{ Y_t \}$ is also stationary with $Corr(Y_t, Y_{t - k}) = \frac{\rho_k}{(1 + \sigma_e^2 / \sigma_X^2)}$, where $\sigma_e^2 / \sigma_X^2$ is called the signal-to-noise ratio.
+
+Since $e_t$ has mean 0, then
+
+$$
+\begin{split}
+  E[Y_t] &= E[X_t + e_t] \\
+  &= E[X_t]  + E[e_t] \\
+  &= E[X_t] + 0 = \mu_{X}\\
+\end{split}
+$$
+
+
+
+Now, since $\rho_k = \frac{\gamma_k}{\gamma_0}$, we have
+
+$$
+\begin{split}
+  Corr(Y_t, Y_{t - k}) &= \frac{\rho_k}{(1 + \sigma_e^2 / \sigma_X^2)} \\
+  &= \frac{\frac{\gamma_k}{\gamma_0}}{(1 + \sigma_e^2 / \sigma_X^2)} \\
+\end{split}
+$$
+
+Solving the gammas we find,
+
+$$
+\begin{split}
+  \gamma_0 &= Var(Y_t) \\
+  &= Var(X_t + e_t) \\
+  &= Var(X_t) + Var(e_t) \\
+  &= \sigma_X^2 + \sigma_e^2 \\
+  \\
+  \gamma_k &= Cov(Y_t, Y_{t - k}) \\
+  &= Cov(X_t + e_t, X_{t - k} + e_{t - k}) \\
+  &= Cov(X_t, X_{t - k}) + Cov(X_t, e_{t - k}) + Cov(e_t, X_{t - k}) + Cov(e_t, e_{t - k})\\
+  &= Cov(X_t, X_{t - k}) + 0 + 0 + Cov(e_t, e_{t - k})\\
+  &= Cov(X_t, X_{t - k}) + Cov(e_t, e_{t - k})\\
+  &= \sigma_X^2 + \sigma_e^2 \text{ for } k = 0, \sigma_{X}^2 \text{ for } k > 0\\
+\end{split}
+$$
+
+Note that $\rho_{k} = Corr(Y_t, Y_{t - k}) = \frac{Cov(Y_t, Y_{t - k})}{\sqrt{Var(Y_t) Var(Y_{t - k})}} = \frac{Cov(X_t, X_{t - k})}{\sigma_{X}^2 + \sigma_{e}^2}$. Thus, we can write the Covariance as,
+
+$$
+\begin{split}
+  \gamma_{k} &= Cov(Y_t, Y_{t - k})\\
+  &= (\sigma_{X}^2 + \sigma_{e}^2) \frac{Cov(Y_t, Y_{t - k})}{\sigma_X^2 + \sigma_{e}^2}\\
+  &= (\sigma_{X}^2 + \sigma_{e}^2) \rho_k \text{ for } k = 0, \sigma_{X}^2 \rho_k \text{ for } k > 0\\
+\end{split}
+$$
+
+Finally, we have two cases:
+
+$$
+\begin{split}
+  Corr(Y_t, Y_{t - k}) &= \frac{Cov(Y_t, Y_{t -k})}{Var(Y_{t})} \\
+  &= \frac{(\sigma_{X}^2 + \sigma_{e}^2) \rho_k}{\sigma_{X}^2 + \sigma_{e}^2}\\
+  &= \frac{\rho_k}{(1 + \sigma_e^2 / \sigma_X^2)}\\
+  &= \rho_k \text{, for } k = 0
+\end{split}
+$$
+
+and
+
+$$
+\begin{split}
+  Corr(Y_t, Y_{t - k}) &= \frac{Cov(Y_t, Y_{t -k})}{Var(Y_{t})} \\
+  &= \frac{\sigma_{X}^2 \rho_k}{\sigma_{X}^2 + \sigma_{e}^2}\\
+  &= \frac{\rho_k}{1 + \frac{\sigma_e^2}{\sigma_X^2}}  \text{, for } k > 0
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 5. Suppose
+
+$$
+  Y_t = \beta_0 + \sum_{i = 1}^k [A_i cos(2 \pi f_i t) + B_i sin(2 \pi f_i t)]
+$$
+
+# where $\beta_0, f_1, f_2, \hdots, f_k$ are constants, and $A_1, A_2, \hdots, A_k, B_1, B_2, \hdots, B_k$ are independent random variables with zero means and variances $Var(A_i) = Var(B_i) = \sigma_i^2$. Show that $\{ Y_t \}$ is (weakly) stationary by finding the mean and autocovariance function.
+
+Finding the mean, we have
+
+$$
+\begin{split}
+  E[Y_t] &= E\bigg[\beta_0 + \sum_{i = 1}^k [A_i cos(2\pi f_i t) + B_i sin(2 \pi f_i t)] \bigg] \\
+  &= \beta_0 + E\bigg[\sum_{i = 1}^k A_i cos(2\pi f_i t) + B_i sin(2 \pi f_i t) \bigg] \\
+  &= \beta_0 + E\bigg[\sum_{i = 1}^k A_i cos(2\pi f_i t) \bigg] + E\bigg[\sum_{i = 1}^k B_i sin(2 \pi f_i t) \bigg] \\
+  &= \beta_0 + \sum_{i = 1}^k cos(2\pi f_i t) E[A_i] + \sum_{i = 1}^k sin(2 \pi f_i t) E[B_i] \\
+  &= \beta_0 + 0 + 0 = \beta_0 \\
+\end{split}
+$$
+
+Thus, the mean is constant over time.
+
+We now find the covariance,
+
+$$
+\begin{split}
+  Cov(Y_t, Y_s) &= Cov\bigg[\beta_0 + \sum_{i = 1}^k [A_i cos(2\pi f_i t) + B_i sin(2 \pi f_i t)], \beta_0 + \sum_{j = 1}^k [A_j cos(2\pi f_j s) + B_j sin(2 \pi f_j s)] \bigg] \\
+  &= Cov\bigg[\sum_{i = 1}^k A_i cos(2\pi f_i t) + B_i sin(2 \pi f_i t), \sum_{j = 1}^k A_j cos(2\pi f_j s) + B_j sin(2 \pi f_j s) \bigg] \\
+  &= \sum_{i = 1}^k \sum_{j = 1}^k Cov\bigg[A_i cos(2\pi f_i t) + B_i sin(2 \pi f_i t), A_j cos(2\pi f_j s) + B_j sin(2 \pi f_j s) \bigg] \\
+  &= \sum_{i = 1}^k \sum_{j = 1}^k \bigg[ Cov(A_i cos(2\pi f_i t), A_j cos(2\pi f_j s)) + Cov(A_i cos(2\pi f_i t), B_j sin(2 \pi f_j s)) \\
+  &+ Cov(B_i sin(2 \pi f_i t), A_j cos(2 \pi f_j s)) +  Cov(B_i sin(2 \pi f_i t), B_j sin(2 \pi f_j s)) \bigg] \\
+  &= \sum_{i = 1}^k \sum_{j = 1}^k \bigg[ cos(2\pi f_i t) cos(2\pi f_j s) Cov(A_i, A_j) + cos(2\pi f_i t)  sin(2 \pi f_j s) Cov(A_i, B_j) \\
+  &+ sin(2 \pi f_i t) cos(2 \pi f_j s) Cov(B_i, A_j) +  sin(2 \pi f_i t) sin(2 \pi f_j s) Cov(B_i, B_j) \bigg] \\
+\end{split}
+$$
+
+If $i \neq j$, the covariance is zero, but if $i = j$ we have,
+
+$$
+\begin{split}
+  Cov &= \sum_{i = 1}^k \sum_{j = 1}^k [ cos(2\pi f_i t) cos(2\pi f_j s) \sigma^2 + cos(2\pi f_i t) sin(2 \pi f_j s) \sigma^2 + sin(2 \pi f_i t) cos(2 \pi f_j s) \sigma^2 +  sin(2 \pi f_i t) sin(2 \pi f_j s) \sigma^2 ] \\
+  &= \sigma^2 \sum_{i = 1}^k \sum_{j = 1}^k [ cos(2\pi f_i t) cos(2\pi f_j s) + cos(2\pi f_i t) sin(2 \pi f_j s)
+  + sin(2 \pi f_i t) cos(2 \pi f_j s) +  sin(2 \pi f_i t) sin(2 \pi f_j s) \bigg] \\
+  &= 
+\end{split}
+$$
+
+
+

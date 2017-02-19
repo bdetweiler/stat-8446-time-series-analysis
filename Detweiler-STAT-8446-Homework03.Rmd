@@ -1,0 +1,492 @@
+---
+title: "Homework Assignment 3"
+author: "Brian Detweiler"
+date: "January 31, 2017"
+header-includes:
+   - \usepackage{amsmath}
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TSA)
+library(dplyr)
+```
+
+# 1. For the cosine model on Page 34-35, it can be shown that the variance of the estimate for the trend in January can be given by Equation (3.4.6) on Page 38:
+
+**Answer:**
+
+$$
+  Var(\hat{\mu}_1) = Var(\hat{\beta}_0) + Var(\hat{\beta}_1) \bigg[ cos\bigg( \frac{2 \pi}{12} \bigg)^2\bigg] + Var(\hat{\beta}_2) \bigg[sin\bigg( \frac{2 \pi}{12} \bigg) \bigg]^2
+$$
+
+# Given the fact that 
+
+$$
+\begin{split}
+  \hat{\beta}_0 &= \frac{1}{n} \sum_{t = 1}^n Y_t \\
+  \hat{\beta}_1 &= \frac{2}{n} \sum_{t = 1}^n \bigg[ cos\bigg(\frac{2\pi}{12} t \bigg) Y_t \bigg] \\
+  \hat{\beta}_2 &= \frac{2}{n} \sum_{t = 1}^n \bigg[ sin\bigg(\frac{2\pi}{12} t \bigg) Y_t \bigg] \\
+\end{split}
+$$
+
+# and
+
+$$
+\begin{split}
+  Y_t &= \mu_t + X_t \\
+  {X_t} &\text{ is } \text{white noise with mean 0 and variance } \sigma^2 \\
+\end{split}
+$$
+
+# Show that $Var(\hat{\mu}_1) = \frac{3 \sigma^2}{n}$. (Hint: $\sum_{t = 1}^n \big[ cos\big( \frac{2 \pi}{12}t \big) \big]^2 = \big[sin\big( \frac{2\pi}{12}t \big)\big]^2 = \frac{n}{2}$.)
+
+**Answer:**
+
+
+
+Expanding the betas in the variance formula, and making note that $Var(\overline{Y}) = \frac{\gamma_0}{n}$ and $\gamma_0 = \sigma^2$, we get
+
+$$
+\begin{split}
+  Var(\hat{\mu}_1) &= Var\bigg( \frac{1}{n} \sum_{t = 1}^n Y_t \bigg) + Var\bigg( \frac{2}{n} \sum_{t = 1}^n \bigg[ cos \big(\frac{2 \pi}{12} t \big)  Y_t \bigg] \bigg) \bigg[ cos \big(\frac{2 \pi}{12} \big) \bigg]^2 + Var\bigg( \frac{2}{n} \sum_{t = 1}^n \bigg[ sin \big(\frac{2 \pi}{12} t \big)  Y_t \bigg] \bigg) \bigg[ sin \big(\frac{2 \pi}{12} \big) \bigg]^2  \\
+  &= Var( \overline{Y}) + 4 Var \bigg( \frac{1}{n} \sum_{t = 1}^n cos(\frac{2 \pi}{12} t) \sum_{t = 1}^n Y_t \bigg) \bigg[ cos \big(\frac{2 \pi}{12} \big) \bigg]^2 + 4 Var \bigg( \frac{1}{n} \sum_{t = 1}^n sin(\frac{2 \pi}{12} t) \sum_{t = 1}^n Y_t \bigg) \bigg[ sin \big(\frac{2 \pi}{12} \big) \bigg]^2 \\
+  &= Var( \overline{Y}) + 4 \bigg[\sum_{t = 1}^n cos(\frac{2 \pi}{12} t) \bigg]^2  Var \bigg( \frac{1}{n} \sum_{t = 1}^n Y_t \bigg) \bigg[ cos \big(\frac{2 \pi}{12} \big) \bigg]^2  + 4 \bigg[ \sum_{t = 1}^n sin(\frac{2 \pi}{12} t)\bigg]^2 Var \bigg( \frac{1}{n} \sum_{t = 1}^n Y_t \bigg)  \bigg[ sin \big(\frac{2 \pi}{12} \big) \bigg]^2 \\
+  &= Var( \overline{Y}) + 4 \frac{n}{2}  Var (\overline{Y}) \bigg[ cos \big(\frac{2 \pi}{12} \big) \bigg]^2  + 4 \frac{n}{2} Var(\overline{Y})  \bigg[ sin \big(\frac{2 \pi}{12} \big) \bigg]^2 \\
+  &= Var( \overline{Y}) + 2n  Var(\overline{Y}) \bigg[ \bigg(cos \big(\frac{2 \pi}{12} \big) \bigg)^2 + \bigg( sin \big(\frac{2 \pi}{12} \big) \bigg)^2 \bigg] \text{ (note the trig identity } (sin(t))^2 + (cos(t))^2 = 1)\\
+  &= Var( \overline{Y}) + 2n  Var(\overline{Y})\\
+  &= \frac{\gamma_0}{n} + 2n \frac{\gamma_0}{n} \\
+  &= \frac{\gamma_0}{n} (1 + 2n) \\
+  &= \frac{\sigma^2}{n} (1 + 2n) \\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. Let $\mu$ be a constant, and ${e_t}$ be a white noise process with mean zero and variance $\sigma_e^2$. Consider the following three stochastic processes of ${Y_t}$. For each of the three processes find $\rho_k$ for $k > 0$. Furthermore, for each ${Y_t}$, find $Var(\overline{Y})$ where $\overline{Y} = \frac{1}{n} \sum_{t = 1}^n Y_t$.
+
+## (a) $Y_t = \mu + e_t$
+
+**Answer:**
+
+For the autocorrelation function, $\rho_k = \frac{Cov(Y_t, Y_{t - k})}{\sqrt{Var(Y_t) Var(Y_{t - k})}}$, we first find the Covariance.
+
+$$
+\begin{split}
+  Cov(Y_t, Y_{t - k}) &= Cov(\mu + e_{t}, \mu + e_{t -k})\\
+  &= Cov(e_{t}, e_{t -k}) \\
+  &= \begin{cases}
+    \sigma_e^2 &\text{ if } k = 0 \\
+    0 &\text{ otherwise }
+  \end{cases}
+\end{split}
+$$
+
+Now, we need the variance.
+
+$$
+\begin{split}
+  Var(Y_t) &= Var(Y_{t - k}) = Var(\mu + e_t) = Var(\mu + e_{t - k}) \text{ due to stationality }\\
+  &= Var(\mu) + Var(e_t) \\
+  &= 0 + \sigma_e^2 \\
+  &= \sigma_e^2
+\end{split}
+$$
+
+Now, putting these together, we can find the autocorrelation function,
+
+$$
+\begin{split}
+  \rho_{k} &= \frac{Cov(e_t, e_{t - k})}{\sqrt{Var(e_t) Var(e_{t - k})}} \\
+  &= \begin{cases}
+    1 & \text{ if } t = k \\
+    0 & \text{ otherwise } 
+  \end{cases}
+\end{split}
+$$
+
+Finding the variance of $\overline{Y}$, 
+
+$$
+\begin{split}
+  Var \bigg(\frac{1}{n} \sum_{t = 1}^n Y_t \bigg) &= Var \bigg(\frac{1}{n} [ \mu + e_1 + \mu + e_2 + \hdots + \mu + e_n] \bigg) \\
+  &= Var \bigg(\frac{1}{n} [n \mu + e_1 + e_2 + \hdots + e_n] \bigg) \\
+  &= \frac{1}{n^2} \big[ Var(n \mu + e_1 + e_2 + \hdots + e_n) \big] \\
+  &= \frac{1}{n^2} \big[ Var(n \mu) + Var(e_1) + Var(e_2) + \hdots + Var(e_n) \big] \\
+  &= \frac{1}{n^2} \big[ 0 + \sigma_e^2 + \sigma_e^2 + \hdots + \sigma_e^2 \big] \\
+  &= \frac{1}{n^2} \big[ \sigma_e^2 + \sigma_e^2 + \hdots + \sigma_e^2 \big] \\
+  &= \frac{n \sigma_e^2}{n^2} \\
+  &= \frac{\sigma_e^2}{n} \\
+\end{split}
+$$
+
+## (b) $Y_t = \mu + e_t - e_{t - 1}$ 
+
+**Answer:**
+
+For the autocorrelation function, $\rho_k = \frac{Cov(Y_t, Y_{t - k})}{\sqrt{Var(Y_t) Var(Y_{t - k})}}$, we first find the Covariance.
+
+$$
+\begin{split}
+  Cov(Y_t, Y_{t - k}) &= Cov(\mu + e_{t} - e_{t - 1}, \mu + e_{t - k} - e_{t - k - 1})\\
+  &= Cov(e_{t} - e_{t - 1}, e_{t - k} - e_{t - k - 1}) \\
+  &= Cov(e_{t}, e_{t - k}) - Cov(e_{t}, e_{t - k - 1}) - Cov(e_{t - 1}, e_{t - k}) + Cov(e_{t - 1}, e_{t - k - 1}) \\
+  &= \begin{cases}
+    2 \sigma_e^2 & \text{ if } k = 0 \\
+    -2 \sigma_e^2 & \text{ if } k = 1 \\
+    -\sigma_e^2 & \text{ if } k = -1 \\
+    0 & \text{ otherwise } \\
+  \end{cases}
+\end{split}
+$$
+
+Now, we need the variance.
+
+$$
+\begin{split}
+  Var(Y_t) &= Var(Y_{t - k}) = Var(\mu + e_t - e_{t - k}) = Var(\mu + e_{t - k} - e_{t - k - 1}) \text{ due to stationality }\\
+  &= Var(\mu) + Var(e_t) + Var(e_{t - k - 1}) \\
+  &= 0 + \sigma_e^2 + \sigma_e^2 \\
+  &= 2\sigma_e^2
+\end{split}
+$$
+
+Now, putting these together, we can find the autocorrelation function,
+
+$$
+\begin{split}
+  \rho_{k} &= \frac{Cov(e_t, e_{t - k})}{\sqrt{Var(e_t) Var(e_{t - k})}} \\
+  &= \begin{cases}
+    1 & \text{ if } k = 0 \\
+    -1 & \text{ if } k = 1 \\
+    -\frac{1}{2} & \text{ if } k = -1 \\
+    0 & \text{ otherwise } \\
+  \end{cases}
+\end{split}
+$$
+
+Finding the variance of $\overline{Y}$, 
+
+$$
+\begin{split}
+  Var \bigg(\frac{1}{n} \sum_{t = 1}^n Y_t \bigg) &= Var \bigg(\frac{1}{n} [ \mu + e_1 - e_0 + \mu + e_2 - e_1 + \hdots + \mu + e_{n - 1} + e_n] \bigg) \\
+  &= Var \bigg(\frac{1}{n} [n \mu - e_0 + e_1 - e_1 + e_2 - e_2 + \hdots + e_{n - 1} - e_{n - 1} + e_n] \bigg) \\
+  &= \frac{1}{n^2} \big[ Var(n \mu - e_0 + e_n) \big] \\
+  &= \frac{1}{n^2} \big[ Var(n \mu) + Var(e_0) + Var(e_n) \big] \\
+  &= \frac{1}{n^2} \big[ 0 + \sigma_e^2 + \sigma_e^2 \big] \\
+  &= \frac{1}{n^2} \big[ 2\sigma_e^2 \big] \\
+  &= \frac{2 \sigma_e^2}{n^2} \\
+\end{split}
+$$
+
+## (c) $Y_t = \mu + e_t + e_{t - 1}$
+
+**Answer:**
+
+For the autocorrelation function, $\rho_k = \frac{Cov(Y_t, Y_{t - k})}{\sqrt{Var(Y_t) Var(Y_{t - k})}}$, we first find the Covariance.
+
+$$
+\begin{split}
+  Cov(Y_t, Y_{t - k}) &= Cov(\mu + e_{t} + e_{t - 1}, \mu + e_{t - k} + e_{t - k - 1})\\
+  &= Cov(e_{t} + e_{t - 1}, e_{t - k} + e_{t - k - 1}) \\
+  &= Cov(e_{t}, e_{t - k}) + Cov(e_{t}, e_{t - k - 1}) + Cov(e_{t - 1}, e_{t - k}) + Cov(e_{t - 1}, e_{t - k - 1}) \\
+  &= \begin{cases}
+    2 \sigma_e^2 & \text{ if } k = 0 \\
+    \sigma_e^2 & \text{ if } k = \pm 1 \\
+    0 & \text{ otherwise } \\
+  \end{cases}
+\end{split}
+$$
+
+Now, we need the variance.
+
+$$
+\begin{split}
+  Var(Y_t) &= Var(Y_{t - k}) = Var(\mu + e_t + e_{t - k}) = Var(\mu + e_{t - k} + e_{t - k - 1}) \text{ due to stationality }\\
+  &= Var(\mu) + Var(e_t) + Var(e_{t - k - 1}) \\
+  &= 0 + \sigma_e^2 + \sigma_e^2 \\
+  &= 2\sigma_e^2
+\end{split}
+$$
+
+Now, putting these together, we can find the autocorrelation function,
+
+$$
+\begin{split}
+  \rho_{k} &= \frac{Cov(e_t, e_{t - k})}{\sqrt{Var(e_t) Var(e_{t - k})}} \\
+  &= \begin{cases}
+    1 & \text{ if } k = 0 \\
+    \frac{1}{2} & \text{ if } k = -1 \\
+    0 & \text{ otherwise } \\
+  \end{cases}
+\end{split}
+$$
+
+Finding the variance of $\overline{Y}$, 
+
+$$
+\begin{split}
+  Var \bigg(\frac{1}{n} \sum_{t = 1}^n Y_t \bigg) &= Var \bigg(\frac{1}{n} [n \mu + e_1 + e_0 + e_2 + e_1 + e_3 + e_2 + \hdots + e_{n - 1} + e_n] \bigg) \\
+ &= Var \bigg(\frac{1}{n} [n \mu + e_0 + 2e_1 + 2e_2 + \hdots + 2e_{n - 1} + e_n] \bigg) \\
+ &= Var \bigg(\frac{1}{n} \big[n \mu + e_0 + e_n + 2 \sum_{t = 1}^{n - 1} e_t \big] \bigg) \\
+ &= \frac{1}{n^2} Var \bigg(\big[n \mu + e_0 + e_n + 2 \sum_{t = 1}^{n - 1} e_t \big] \bigg) \\
+ &= \frac{1}{n^2} \bigg[ Var(n \mu) + Var(e_0) + Var(e_n) + 4 Var \bigg(\sum_{t = 1}^{n - 1} e_t \bigg) \bigg] \\
+ &= \frac{1}{n^2} [0 + \sigma_e^2 + \sigma_e^2 + 4(n - 1)\sigma_e^2] \\
+ &= \frac{2 \sigma_e^2 + 4 \sigma_e^2 n - 4 \sigma_e^2}{n^2} \\
+ &= \frac{\sigma_e^2 [2 + 4 n - 4]}{n^2} \\
+ &= \frac{[4 n - 2]}{n^2} \sigma_e^2 \\
+\end{split}
+$$
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. The data file \texttt{wages} contains monthly values of the average hourly wages (in dollars) for workers in the U.S. apparel and textile products industry for July 1981 through 1987.
+
+```{r fig.height=4, fig.width=6, fig.align='center'}
+data(wages)
+wages
+```
+
+## (a) Display and interpret the time series plot for these data.
+
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+plot.ts(wages, frequency=12, start=c(1981, 7))
+```
+
+## (b) Use least squares to fit a linear time trend to this time series. Interpret the regression output. Save the standardized residuals from the fit for futher analysis.
+
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+fit <- lm(wages ~ time(wages))
+summ <- summary(fit)
+plot.ts(wages, frequency=12, start=c(1981, 7))
+abline(fit)
+summ
+std.resid <- rstudent(fit)
+```
+
+## (c) Construct and interpret the time series plot of the standardized residuals from (b).
+
+**Answer:**
+
+It appears that the residuals are mostly zero-mean and fall within one standard deviation, except for the beginning and end of the plot. 
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+
+std.resid.ts <- ts(std.resid, start=c(1981, 7), frequency = 12)
+plot.ts(std.resid.ts, ylab="Standard Residual")
+abline(h=0)
+abline(h=1, col="red")
+abline(h=-1, col="red")
+```
+
+## (d) Use least squares to fit a quadratic time trend to the wages time series. Interpret the regression output. Save the standardized residuals from the fit.
+ 
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+fit.quad <- lm(wages ~ time(wages) + I(time(wages)^2))
+summ.quad <- summary(fit.quad)
+summ.quad
+predicted.counts <- predict(fit.quad, list(Time=time(wages), Time2=time(wages)^2))
+predicted.ts <- ts(predicted.counts, start=c(1981, 7), frequency=12)
+
+plot.ts(wages)
+lines(predicted.ts, col="red")
+```
+
+Comparing $R^2$ values from the linear model and the quadratic model, we can see that Model 1 has $R^2 = `r summ$r.squared`$ and Model 2 has an adjusted $R^2 = `r summ.quad$adj.r.squared`$, which is slightly better.
+
+
+## (e) Construct and interpret the time series plot of the standardized residuals from part(d).
+
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+resid <- rstudent(fit.quad)
+resid.ts <- ts(resid, start=c(1981, 7), frequency=12)
+plot(resid.ts, type="o")
+```
+
+The data show mean `r mean(resid)` and standard deviation `r sd(resid)`, which would suggest that $X_t$ is indeed white noise. However, we notice some patterns in the residuals, and a few outliers. We may need some more tests.
+
+## (f) Perform a runs test on the standardized residuals from part (d) and interpret the results.
+
+**Answer:**
+
+With the following null and alternative hypotheses, we perform a Runs Test:
+
+$$
+\begin{split}
+  H_0 &: \text{The data are from a standard normal} \\
+  H_a &: \text{The data are not from a standard normal} \\
+\end{split}
+$$
+
+```{r}
+runs <- runs.test(factor(resid > median(resid)))
+runs
+```
+
+With a p-value of $`r runs$p.value` << 0.05$, we can say there are trends in the data.
+
+## (g) Calculate and interpret the sample autocorrelations for the standardized residuals from part (d).
+
+**Answer:**
+
+Here, we see that the autocorrelation at lag $k = 1, 2, 3$ and $k = 15, 16, 17, 18$ fall outside of the standard error (blue lines). The autocorrelation is also heteroskedastic, which is uncharacteristic of a white noise process.
+
+```{r}
+acf(resid)
+```
+
+## (h) Investigate the normality of the standardized residuals from part (d). Consider histograms and normal probability plots. Interpret the plots. Perform the Shapiro-Wilk test for Normality.
+
+**Answer:**
+
+Looking at the histogram, we can see how this would be problematic for describing a white noise process. We would expect to see a peak at 0, but instead we see a trough, and there are outliers on the left and right. 
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+hist(resid, breaks=30)
+```
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+qqn <- qqnorm(resid)
+qqline(resid)
+r.sq <- cor(qqn$x, qqn$y)
+```
+
+We can further use a Q-Q plot to see how the data conform to a normal distribution. Here, we have $R^2 = `r r.sq`$, but we can see some deviation in the upper quantiles. From here, we perform a Shapiro-Wilk test for Normality.
+
+Again, using the following hypotheses:
+
+$$
+\begin{split}
+  H_0 &: \text{The data are from a standard normal} \\
+  H_a &: \text{The data are not from a standard normal} \\
+\end{split}
+$$
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+shapiro.test(resid)
+```
+
+Thus we do not have enough information to reject the null hypothesis, so we must conclude that the data are from a normal distribution.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 4. The data file \texttt{retail} lists total U.K. retail sales (in billions of pounds) from January 1986 through March 2007. Note that year 2000 = 100 is the base year.
+
+```{r}
+data(retail)
+```
+
+## (a) Display and interpret the time series plot for these data. Do you see any seasonally trend from the data?
+
+**Answer:**
+
+Here we can see that sales are generally increasing over time, but there is also a serious seasonal effect.
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+plot(retail)
+```
+
+## (b) Use least squares to fit a seasonal-means plus linear time trend to this time series. Interpret the regression output. Save the standardized residuals from the fit for further analysis.
+
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+fit1 = lm(retail ~ time(retail) + season(retail) - 1)
+summ1 <- summary(fit1)
+summ1
+resid1 <- rstudent(fit1)
+resid1.ts <- ts(resid1, start=c(1986, 1), freq=12)
+plot(retail)
+lines(as.vector(time(retail)), fitted.values(fit1), col = 3, lwd = 2)
+```
+
+## (c) Construct and interpret the time series plot of the standardized residuals from part (b). Are there still any seasonal trends in the residuals?
+
+**Answer:**
+
+Here, the residuals very much display a seasonal effect, and is very heteroskedastic.
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+plot(resid1.ts)
+```
+
+## (d) Perform a runs test on the standardized residuals from part (b) and interpret the results.
+
+**Answer:**
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+runs <- runs.test(factor(resid1 > median(resid1)))
+runs
+```
+
+The runs test has a p-value of $`r runs$p.value` << 0.05$, so we can say there are definitely trends in the residuals.
+
+## (e) Calculate and interpret the sample autocorrelations for the standardized residuals from part (b).
+
+**Answer:**
+
+There are several values for lag where the autocorrelation falls outside of the standard error lines.
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+acf(resid1)
+```
+
+## (f) Investigate the normality of the standardized residuals from part (b). Consider histograms and normal probability plots. Interpret the plots. Perform the Shapiro-Wilk test for Normality.
+
+**Answer:**
+The histogram looks very normal, but there are outliers that may be throwing off the normality.
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+hist(resid1, breaks=30)
+```
+
+And here in the Q-Q plot, we can see this effect, throwing the data off from normal at the outliers.
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+qqn <- qqnorm(resid1)
+qqline(resid1)
+r.sq <- cor(qqn$x, qqn$y)
+```
+
+While the data fit a normal distribution with $R^2 = `r r.sq`$, we may be hesitant to say for sure it is normal due to the outliers in the tails.
+
+Finally, we perform a Shapiro-Wilk test for normality to confirm our suspicion:
+
+$$
+\begin{split}
+  H_0 &: \text{The data are from a standard normal} \\
+  H_a &: \text{The data are not from a standard normal} \\
+\end{split}
+$$
+
+```{r fig.height=4, fig.width=6, fig.align='center', warning=F, message=F}
+shap <- shapiro.test(resid1)
+```
+
+With a p-value of $`r shap$p.value` << 0.05$, so we must conclude that the residuals are not from a standard normal, and thus not from a white noise process.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
