@@ -74,12 +74,22 @@ $$
   Y_t &= e_t - 0.75 e_{t - 1} - (-0.5) e_{t - 2} - 0.25 e_{t - 3} \\
   \rho_k &= \begin{cases}
     1 & \text{ if } k = 0 \\
-    \frac{- 0.75 + (0.75) (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 1 \\
-    \frac{- (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 2 \\
-    \frac{- (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} &\text{ for } k \pm 3 \\
+    \frac{- 0.75 + (0.75) (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} = \frac{-1.25}{1.875} = \frac{-2}{3} &\text{ for } k \pm 1 \\
+    \frac{- (-0.5) + (-0.5) (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} = \frac{0.375}{1.875} = \frac{1}{5} &\text{ for } k \pm 2 \\
+    \frac{- (0.25)}{1 + (0.75)^2 + (-0.5)^2 + (0.25)^2} = \frac{-0.25}{1.875} = \frac{-2}{15} &\text{ for } k \pm 3 \\
   \end{cases}
 \end{split}
 $$
+
+Such an autocorrelation function might look like this:
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 8
+ACF <- ARMAacf(ma = c(-0.75, 0.5, -0.25), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
 
 \begin{flushright}
   $\blacksquare$
@@ -91,9 +101,46 @@ $$
 
 $$
 \begin{split}
-  max_{\theta} \rho_1 = 0.5 &\text{ and } min_{\theta} \rho_1 = -0.5 \\
+  \smash{\displaystyle\max_{-\infty < \theta < \infty}} \rho_1 = 0.5 &\text{ and } \smash{\displaystyle\min_{-\infty < \theta < \infty}}  \rho_1 = -0.5 \\
 \end{split}
 $$
+
+**Answer:**
+
+For MA(1), using $k = 1$, we know $\rho_1 = \frac{-\theta}{1 + \theta^2}$
+
+We can find the global maxima and minima at the inflection points by taking the derivative and setting it equal to zero.
+
+$$
+\begin{split}
+  \frac{-\theta}{1 + \theta^2} \frac{d}{d \theta} &= \frac{t^2 - 1}{(t^2 + 1)^2} \\
+  \frac{t^2 - 1}{(t^2 + 1)^2} &= 0 \\
+  \frac{t^2}{(t^2 + 1)^2} - \frac{1}{(t^2 + 1)^2} &= 0 \\
+  \frac{t^2}{(t^2 + 1)^2} &= \frac{1}{(t^2 + 1)^2} \\
+  t^2 &= 1 \\
+  t &= \pm 1\\
+\end{split}
+$$
+
+Now we just need to evaluate at $t = \pm 1$ and we can see the global maximum and minimum:
+
+$$
+\begin{split}
+  \frac{-1}{1 + 1^2} &= \frac{-1}{2} \\
+  \frac{-(-1)}{1 + (-1)^2} &= \frac{1}{2}
+\end{split}
+$$
+
+```{r, fig.height=3, fig.width=3, fig.align="center", echo=FALSE}
+curve(-x/(1 + x^2), -2, 2)
+points(c(-1, 1), c(.5, -.5), pch=20, col="red")
+```
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
 
 # 3. Consider the ARMA(1, 2) model
 
@@ -105,20 +152,79 @@ $$
 
 # Assume that $\{e_t\}$ is a white noise process with zero mean and unit variance $(\sigma_e^2 = 1)$. Find the numerical values of $\rho_0, \rho_1$ and $\rho_2$ by hand. Also find a recursive relationship between $\rho_k$ and $\rho_{k - 1}$ for $k > 2$.
 
-
 **Answer:**
+
+As always, $\rho_0 = \frac{\gamma_0}{\gamma_0} = 1$. 
+
+$$
+\begin{split}
+  \rho_1 &= \frac{\gamma_1}{\gamma_0} \\
+  &= 
+\end{split}
+$$
 
 # 4. Consider a "AR(1)" process satisfying $Y_t = \phi Y_{t - 1} + e_t$, where $t > 0$, $\phi$ can be any number and $\{e_t\}$ is a white noise process with zero mean and variance $\sigma_e^2$. Let $Y_0$ be a random variable with mean $\mu$ and variance $\sigma_0^2$. Show that for $t > 0$ we have 
 
 ## (a) $Y_t = e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \hdots + \phi^{t - 1} e_1 + \phi^t Y_0$
 
+**Answer:**
+
+Using recursion for a simple case, we have
+
+$$
+\begin{split}
+  Y_t &= \phi Y_{t - 1} + e_t \\
+  &= \phi( \phi Y_{t - 2} + e_{t - 1}) + e_t \\
+  &= \phi(\phi( \phi Y_{t - 3} + e_{t - 2}) + e_{t - 1}) + e_{t} \\
+  &= e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 Y_{t - 3} \\
+\end{split}
+$$
+
+Extending this down to $Y_0$, we get
+
+$$
+\begin{split}
+  Y_t &= \phi Y_{t - 1} + e_t \\
+  &= e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 e_{t - 3} + \hdots + \phi^{t - 1} e_1 + \phi^t Y_0 \\ 
+\end{split}
+$$
+  
 ## (b) $E[Y_t] = \phi^t \mu$.
+
+Using the result from (a), we get
+
+$$
+\begin{split}
+  E[Y_t] &= E[\phi Y_{t - 1} + e_t] \\
+  &= E[e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 e_{t - 3} + \hdots + \phi^{t - 1} e_1 + \phi^t Y_0] \\ 
+  &= E[e_t] + E[\phi e_{t - 1}] + E[\phi^2 e_{t - 2}] + E[\phi^3 e_{t - 3}] + \hdots + E[\phi^{t - 1} e_1] + E[\phi^t Y_0] \\ 
+  &= 0 + \phi \cdot 0 + \phi^2 \cdot 0  + \phi^3 \cdot 0 + \hdots + \phi^{t - 1} \cdot 0 + \phi^t E[Y_0] \\ 
+  &= \phi^t E[Y_0] \\ 
+  &= \phi^t \mu \\ 
+\end{split}
+$$
 
 ## (c)
 $Var(Y_t) = \begin{cases} 
               \frac{1 - \phi^{2t}}{1 - \phi^2} \sigma_e^2 + \phi^{2t} \sigma_0^2 & \text{ for } \phi \neq 1 \\ 
               t \sigma_e^2 + \sigma_0^2 &\text{ for } \phi = 1 
            \end{cases}$
+
+Similarly,
+$$
+\begin{split}
+  Var(Y_t) &= Var(\phi Y_{t - 1} + e_t) \\
+  &= Var(e_t + \phi e_{t - 1} + \phi^2 e_{t - 2} + \phi^3 e_{t - 3} + \hdots + \phi^{t - 1} e_1 + \phi^t Y_0) \\ 
+  &= Var(e_t) + Var(\phi e_{t - 1}) + Var(\phi^2 e_{t - 2}) + Var(\phi^3 e_{t - 3}) + \hdots + Var(\phi^{t - 1} e_1) + Var(\phi^t Y_0) \\ 
+  &= Var(e_t) + \phi^2 Var(e_{t - 1}) + \phi^4 Var( e_{t - 2}) + \phi^6 Var(e_{t - 3}) + \hdots + \phi^{2 (t - 1)} Var(e_1) + \phi^{2t} Var(Y_0) \\ 
+  &= \sigma_e^2 + \phi^2 \sigma_e^2 + \phi^4  \sigma_e^2 + \phi^6  \sigma_e^2 + \hdots + \phi^{2 (t - 1)} \sigma_e^2 + \phi^{2t} \sigma_0^2 \\ 
+\end{split}
+$$
+
+Letting $\phi = 1$, it is clear that $Var(Y_t) = t \sigma_e^2 + \sigma_0^2$.
+
+If $\phi \neq 1$, we can see that $Var(Y_t) = \sigma_e^2 (1 + \phi^2 + \phi^4 + \hdots + \phi^{2(t - 1)}) + \phi^{2t} \sigma_0^2$. The expanded series identity for $(1 + \phi^2 + \phi^4 + \hdots + \phi^{2(t - 1)})$ is $\frac{1 - \phi^{2t}}{1 - \phi^2}$, and thus, for $\phi \neq 1$, we have $Var(Y_t) = \frac{1 - \phi^{2t}}{1 - \phi^2} \sigma_e^2 + \phi^{2t} \sigma_0^2$.
+
 
 ## (d) Suppose $\mu = 0$. Show that if $\{Y_t\}$ is stationary, then $Var(Y_t) = \frac{\sigma_e^2}{1 - \phi^2}$.
 
@@ -136,18 +242,81 @@ abline(h = 0)
 
 ## (a) MA(1) with $\theta = 0.5$
 
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ma = c(0.5), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
 ## (b) MA(1) with $\theta = -0.5$
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ma = c(-0.5), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
 
 ## (c) MA(2) with $\theta_1 = \theta_2 = 0.1$
 
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ma = c(0.1, 0.1), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
 ## (d) AR(1) with $\phi = 0.4$
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ar = c(0.4), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
 
 ## (e) AR(1) with $\phi = -0.4$
 
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ar = c(-0.4), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
 ## (f) AR(2) with $\phi_1 = 0.5$ and $\phi_2 = -0.9$
+
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ar = c(0.5, -0.9), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
 
 ## (g) ARMA(1, 1) with $\phi = 0.7$ and $\theta = 0.4$
 
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ar = c(0.7), ma = c(0.4), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
+
 ## (h) ARMA(1, 2) given in Question 3
 
+```{r, fig.height=4, fig.width=5, fig.align="center"}
+n <- 20
+ACF <- ARMAacf(ar = c(0.7), ma = c(0.8, -0.6), lag.max = n)
+plot(0:n, ACF, type = 'h', xlab = 'Lag', ylim = c(-1, 1), xaxp = c(0, n, n))
+points(0:n, ACF, pch = 20)
+abline(h = 0)
+```
 
