@@ -156,12 +156,72 @@ $$
 
 As always, $\rho_0 = \frac{\gamma_0}{\gamma_0} = 1$. 
 
+To find $\rho_1$ and $\rho_2$, we'll first need $Var(Y_t)$.
+
 $$
 \begin{split}
-  \rho_1 &= \frac{\gamma_1}{\gamma_0} \\
-  &= 
+  Var(Y_t) &= \phi_1^2 Var(Y_{t - 1}) + Var(e_t) + \theta_1^2 Var(e_{t - 1}) - \theta_2^2 Var(e_{t - 2}) \\
+  &= \phi_1^2 \gamma_0 + \sigma_e^2 + \theta_1^2 \sigma_2^2 - \theta_2^2 \sigma_e^2 \\
+  \gamma_0 &= \phi_1^2 \gamma_0 + \sigma_e^2 (1 + \theta_1^2 - \theta_2^2) \\
+  \gamma_0 - \phi_1^2 \gamma_0 &= \sigma_e^2 (1 + \theta_1^2 - \theta_2^2) \\
+  \gamma_0 (1 - \phi_1^2) &= \sigma_2^2 (1 + \theta_1^2 - \theta_2^2) \\
+  \gamma_0 &= \frac{\sigma_e^2 (1 + \theta_1^2 - \theta_2^2)}{1 - \phi_1^2} \\
 \end{split}
 $$
+
+Substituting in values for $\phi_1, \theta_1, \theta_2$, and $\sigma_e^2 = 1$ we have 
+
+$$
+\begin{split}
+  \gamma_0 &= \frac{1 + (0.8)^2 - (0.6)^2}{1 - (0.7)^2} \\
+  &= \frac{1 + (0.8)^2 - (0.6)^2}{1 - (0.7)^2} \\
+  &= \frac{1 + 0.64 - 0.36}{1 - 0.49} \\
+  &= \frac{1 + 0.64 - 0.36}{1 - 0.49} \\
+  &= \frac{1.28}{0.51} \\
+  &\approx 2.5098
+\end{split}
+$$
+
+Now we need $\gamma_k$ for $k = 1, 2$. 
+
+
+$$
+\begin{split}
+  \gamma_1 &= Cov(Y_t, Y_t - k) \\
+  &= \phi_1 Cov(Y_{t - 1}, Y_{t - k}) + \theta_1 \sigma_e^2 - \theta_2 \sigma_e^2 \\
+  &= \phi_1 \gamma_0 + \theta_1 \sigma_e^2 - \theta_2 \sigma_e^2 \\
+  \gamma_2 &= \phi_1 \gamma_1 - \theta_2 \sigma_e^2 \\
+  \gamma_k &= \phi_1 \gamma_{k - 1} \\
+\end{split}
+$$
+
+With substituted values, we have
+
+$$
+\begin{split}
+  \gamma_1 &= 0.7 (2.5098) + 0.8 (1) - 0.6 (1) \\
+  &\approx 1.9569 \\
+  \gamma_2 &= 0.7 (1.9569) - 0.6 (1) \\
+  &\approx 0.7698 \\
+\end{split}
+$$
+
+Thus, $\rho_k$ is 
+
+$$
+\begin{split}
+  \rho_k &= \frac{\gamma_k}{\gamma_0} \\
+  &= \frac{\phi_1 \gamma_{k - 1}}{\frac{\sigma_e^2 (1 + \theta_1^2 - \theta_2^2)}{1 - \phi_1^2}} \\
+  &= \frac{0.7 \gamma_{k - 1}}{2.5098} \\
+  &\approx 0.2789 \gamma_{k - 1} \\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
 
 # 4. Consider a "AR(1)" process satisfying $Y_t = \phi Y_{t - 1} + e_t$, where $t > 0$, $\phi$ can be any number and $\{e_t\}$ is a white noise process with zero mean and variance $\sigma_e^2$. Let $Y_0$ be a random variable with mean $\mu$ and variance $\sigma_0^2$. Show that for $t > 0$ we have 
 
