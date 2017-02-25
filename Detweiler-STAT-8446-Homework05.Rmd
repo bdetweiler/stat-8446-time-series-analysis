@@ -1,0 +1,97 @@
+---
+title: "Homework 5"
+author: "Brian Detweiler"
+date: "March 2 , 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TSA)
+```
+
+# 1. For each of the following, identify it as an ARIMA model. That is, find the values of $p, d$, and $q$ and the values of the parameters ($\phi$'s and $\theta$'s). Recall that by definition ARMA($p, q$) models must be stationary and invertible.
+
+## (a) $Y_t = 0.6 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2}$
+
+This appears to be an ARMA(2, 2), with $\phi_1 = 0.6$ and $\phi_2 = 0.4$, $\theta_1 = -0.5$ and $\theta_2 = 0.25$. 
+
+We must verify the assumptions that it is stationary and invertible.
+
+We have
+
+$$
+\begin{split}
+  \phi_1 + \phi_2 &= 0.6 + 0.4 = 1.0 \nless 1.0\\
+  \phi_2 - \phi_1 &= 0.4 - 0.6 = -0.2 < 1 \\
+  |\phi_2| &= 0.4 < 1 \\
+\end{split}
+$$
+
+Here the first constraint is violated, so 
+
+## (b) $Y_t = 2 Y_{t - 1} - Y_{t - 2} + e_t$
+
+## (c) $Y_t = 0.5 Y_{t - 1} - 0.5 Y_{t - 2} + e_t - 0.1 e_{t - 1}$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+
+# 2. For each ARIMA model described in Question 1, find the numerical values of $\psi_0, \psi_1, \psi_2, \psi_3, \psi_4$ and a recurrence relation for $\psi_k, k > 4$.
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Consider a stationary process $\{Y_t\}$. Show that if $\rho_1  < 0.5$ then $\nabla Y_t$ has a larger variance than $Y_t$.
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 4. The data set \texttt{gold} from the \texttt{TSA} library contains the daily price of gold for 252 trading days in 2005.
+
+```{r}
+data(gold)
+```
+
+## (a) Construct a time series plot of the price of gold $Y_t$. What are the interesting features of this process?
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+plot(gold)
+```
+
+The price of gold does not seem to be based on a deterministic trend, as we can see it begins to increase in variance after 150 days.
+
+## (b) Let $W_t = \nabla (\ln Y_t)$, the differences of the logarithms. Construct a time series plot of $W_t$. Does it look stationary?
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+plot(diff(log(gold)))
+```
+
+This looks heteroskedastic, and therefore not stationary, however, the variance is actually quite small, between `r min(diff(log(gold)))` and `r max(diff(log(gold)))`. 
+
+## (c) Use the sample ACF to investigate whether $W_t$ is a white noise process.
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+acf(diff(log(gold)))
+```
+
+## (d) Investigate whether $W_t$ is a normal white noise process.
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
