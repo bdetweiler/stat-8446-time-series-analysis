@@ -32,7 +32,67 @@ Here the first constraint is violated, so
 
 ## (b) $Y_t = 2 Y_{t - 1} - Y_{t - 2} + e_t$
 
+Verifying the assumptions that it is stationary and invertible,
+
+$$
+\begin{split}
+  \phi_1 + \phi_2 &= 2 + (-1) = 1.0 \nless 1.0\\
+  \phi_2 - \phi_1 &= (-1) - 2 = -3 < 1 \\
+  |\phi_2| &= 1 \nless 1 \\
+\end{split}
+$$
+
+Since the assumptions are violated, this is not stationary as an AR(2) model.
+
+We can actually rewrite this as $\nabla Y_t$, and we have
+
+$$
+\begin{split}
+  Y_t &= Y_{t - 1} + Y_{t - 1} - Y_{t - 2} + e_t \\
+  Y_t - Y_{t - 1} &=  Y_{t - 1} - Y_{t - 2} + e_t \\
+  \nabla Y_{t} &=  Y_{t - 1} - Y_{t - 2} + e_t \\
+\end{split}
+$$
+
+Verifying the assumptions for stationary, we have
+
+$$
+\begin{split}
+  \phi_1 + \phi_2 &= 1 + (-1) = 0 < 1.0\\
+  \phi_2 - \phi_1 &= 1 - (-1) = 2 \nless 1 \\
+  |\phi_2| &= 1 \nless 1 \\
+\end{split}
+$$
+
+So this is still not stationary.
+
+Now we look at the second difference,
+
+$$
+\begin{split}
+  \nabla^2 Y_{t} &= \nabla (\nabla Y_t) \\
+  W_t &= \nabla (Y_t - Y_{t - 1}) = Y_t - 2 Y_{t - 1} + Y_{t - 2} \\
+\end{split}
+$$
+
+Now, since $W_t = Y_t - 2 Y_{t - 1} + Y_{t - 2} = e_t$, the second difference is a white noise process. Thus, it is an IMA(2, 0).
+
+
 ## (c) $Y_t = 0.5 Y_{t - 1} - 0.5 Y_{t - 2} + e_t - 0.1 e_{t - 1}$
+
+This seems to be an ARMA(2, 1) with $\phi_1 = 0.5, \phi_2 = -0.5$ and $\theta_1 = -0.1$.
+
+The conditions for stationary hold,
+$$
+\begin{split}
+  \phi_1 + \phi_2 &= 0.5 + (-0.5) = 0 < 1.0\\
+  \phi_2 - \phi_1 &= -0.5 + 0.5 = 0 < 1 \\
+  |\phi_2| &= 0.5 < 1 \\
+\end{split}
+$$
+
+And since $|\theta_1| = 0.1 < 1$, then it is also invertible.
+
 
 \begin{flushright}
   $\blacksquare$
@@ -43,6 +103,9 @@ Here the first constraint is violated, so
 
 # 2. For each ARIMA model described in Question 1, find the numerical values of $\psi_0, \psi_1, \psi_2, \psi_3, \psi_4$ and a recurrence relation for $\psi_k, k > 4$.
 
+```{r}
+#psi.weights.wge(phi = c(2, -1), theta = 0, lag.max = 10)
+```
 
 \begin{flushright}
   $\blacksquare$
@@ -51,6 +114,34 @@ Here the first constraint is violated, so
 \pagebreak
 
 # 3. Consider a stationary process $\{Y_t\}$. Show that if $\rho_1  < 0.5$ then $\nabla Y_t$ has a larger variance than $Y_t$.
+
+We will show that $Var(\nabla Y_t) > Var(Y_t)$.
+
+Since $\{Y_t\}$ is stationary, $Var(Y_t) = \gamma_0 = \sigma^2$ is a constant.
+
+We have $Var(\nabla Y_t) = Var(Y_t - Y_{t - 1})$. 
+
+By the properties of variance and letting $k = 1$, 
+$$
+\begin{split}
+  Var(\nabla Y_t) &= Var(Y_t) + Var(Y_{t - k}) - 2Cov(Y_t, Y_{t - k})\\
+  &= \gamma_0 + \gamma_0 - 2 \gamma_{k} \\
+  &= 2 \gamma_0 - 2 \gamma_{k} \\
+  &= 2 (\gamma_0 - \gamma_{k}) \\
+  &= 2 (\gamma_0 - \gamma_{k}) \\
+\end{split}
+$$
+
+Since $\rho_1 = \frac{\gamma_k}{\gamma_0}$, we have
+$$
+\begin{split}
+  Var(\nabla Y_t) &= 2 (\gamma_0 - \frac{\gamma_0}{\gamma_0} \gamma_{k}) \\
+  &= 2 (\gamma_0 - \rho_k \gamma_0) \\
+  &= 2 \gamma_0 (1 - \rho_k) \\
+\end{split}
+$$
+
+Thus, for $\rho_k < 0.5$ for $k = 1$, then $2 (1 - \rho_k) > 1$, and hence when multiplied by $\gamma_0$, is larger than $Var(Y_t) = \gamma_0$.
 
 
 \begin{flushright}
@@ -68,18 +159,23 @@ data(gold)
 ## (a) Construct a time series plot of the price of gold $Y_t$. What are the interesting features of this process?
 
 ```{r, fig.height=4, fig.width=5, fig.align='center'}
-plot(gold)
+par(cex=1)
+plot(gold, ylab="Gold Price", pch=".")
 ```
 
 The price of gold does not seem to be based on a deterministic trend, as we can see it begins to increase in variance after 150 days.
 
 ## (b) Let $W_t = \nabla (\ln Y_t)$, the differences of the logarithms. Construct a time series plot of $W_t$. Does it look stationary?
 
-```{r, fig.height=4, fig.width=5, fig.align='center'}
+```{r, fig.height=4, fig.width=5, fig.align='center', warning=FALSE}
 plot(diff(log(gold)))
+stationary <- adf.test(diff(log(gold)), alternative = "stationary")
 ```
 
 This looks heteroskedastic, and therefore not stationary, however, the variance is actually quite small, between `r min(diff(log(gold)))` and `r max(diff(log(gold)))`. 
+
+Performing an Augmented Dickey-Fuller test for stationarity, we have a p-value of `r stationary$p.value`, so we reject the null hypothesis. The difference appears to be stationary.
+
 
 ## (c) Use the sample ACF to investigate whether $W_t$ is a white noise process.
 
@@ -87,8 +183,18 @@ This looks heteroskedastic, and therefore not stationary, however, the variance 
 acf(diff(log(gold)))
 ```
 
+The ACF of the log difference appears to follow a white noise process.
+
 ## (d) Investigate whether $W_t$ is a normal white noise process.
 
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+hist(diff(log(gold)), breaks=100)
+qqnorm(diff(log(gold)))
+qqline(diff(log(gold)))
+gold.test <- shapiro.test(diff(log(gold)))
+```
+
+Although there are some outliers at the extremes, running a Shapiro-Wilk test for normality results in a p-value of `r gold.test$p.value` < 0.05, so we can say this is a normal white noise process.
 
 \begin{flushright}
   $\blacksquare$
