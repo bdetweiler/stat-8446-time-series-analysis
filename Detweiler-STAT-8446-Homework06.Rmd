@@ -1,0 +1,84 @@
+---
+title: "Homework 6"
+author: "Brian Detweiler"
+date: "March 11, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TSA)
+```
+
+# 1. Consider three seperate AR(1) models: $\phi = 0.1, \phi = 0.5$, and $\phi = 0.8$.
+
+```{r}
+phi1 <- 0.1
+phi2 <- 0.5
+phi3 <- 0.8
+```
+
+## (a) For each model, calculate $\rho_1$ and $\rho_7$.
+
+## (b) For each model, calculate $Var(r_1)$ and $Var(r_7)$.
+
+## (c) For each model, use the \texttt{arima.sim} function to simulate a time series of length $n = 60$. Then use the \texttt{acf} function to calculate $r_1$ and $r_7$. Remember to set up a random seed for your simulation.
+
+## (d) Based on your results in parts (a) and (b), are $r_1$ and $r_7$ from part (c) within 2 standard deviations of $\rho_1$ and $\rho_7$ respectively?
+
+## (e) Repeat part (c) for 1000 times. Draw histograms for $r_1$'s and $r_7$'s for each model. What proportion of $r_1$'s and $r_7$'s are within 2 standard deviations of $\rho_1$ and $\rho_7$?
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+
+# 2. Consider an $AR(1)$ model with $\phi = 0.6$.
+
+## (a) Use the \texttt{arima.sim} function to simulate three time series of lengths $n = 15$, 75, and 100.
+
+## (b) For each set of simulated data, calculate $r_1$.
+
+## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
+
+## (d) Repeat part (a) for 1000 times. For each $n$, draw a histogram of the 1000 $r_1$'s, and find what proportion of $r_1$'s are within 2 standard deviations of $\rho_1$.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Consider an MA(1) model with $\theta = 0.6$
+
+## (a) Use the \texttt{arima.sim} function to simulate three time series of lengths $n$ = 15, 75, and 150. Note that \textsf{R} uses the negative of the MA coefficients.
+
+## (b) For each set of simulated data, calculate $r_1$.
+
+## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
+
+## (d) Repeat part (a) for 1000 times. For each $n$, draw a histogram of the 1000 $r_1$'s, and find what proportion of $r_1$'s are within 2 standard deviations of $\rho_1$.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 4. The dataset \texttt{days} contains accounting data. The data is the number of days it took to receive payment for 130 consecutive orders from a particular distributor.
+
+## (a) Plot the times series. Are there any unusual values?
+
+## (b) Draw the sample ACF and sample PACF plots. What do you find?
+
+## (c) Replace the unusual values with a value of 35 days. Redraw the sample ACF and sample PACF plots. Are they different from part (b)?
+
+## (d) What ARMA model would you specify for this series after removing the outliers? Explain.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
