@@ -152,33 +152,73 @@ And since $|\theta_1| = 0.1 < 1$, then it is also invertible.
 
 ## (a) $Y_t = 0.6 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2}$
 
-$$
-\begin{split}
-  \phi_1 &= -0.4 \\
-  \theta_1 &= -0.5 \\
-  \theta_2 &= 0.25 \\
-\end{split}
-$$
-
-As always, $\psi_0 = 1$.
+We saw that this ARIMA(1, 1, 2) could be represented as an ARMA(1, 2) as
 
 $$
 \begin{split}
-  \psi_1 &= 0.5 = \psi_1 - 0.6 \psi_0 = 1.1 \\
-  &= 0.5 = \psi_1 - 0.6 (1) = 1.1 \\
-  \psi_2 &= -0.25 = \psi_2 - 0.6 \psi_1 - 0.4 \psi_0 \\
-  \psi_2 &= -0.25 = \psi_2 - 0.6 (1.1) - 0.4 (1) \\
-  \psi_2 &= 0.81 \\
-  \psi_3 &= 0 = \psi_3 - 0.6 \psi_2 - 0.4 \psi_1 \\
-  \psi_3 &= 0 = \psi_3 - 0.6 \psi_2 - 0.4 \psi_1 \\
-  &= 0.9260 \\
-  \psi_4 &= 0 = \psi_4 - 0.6 \psi_3 -0.4 \psi_2 \\
-  &= 0.8796 \\
-  \theta_k &= \psi_k - \phi_1 \psi_{k - 1} - \phi_2 \psi_{k - 2} - \hdots - \phi_n \psi_{k - n} \\
+  W_t &= -0.4 W_{t - 1} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
 \end{split}
 $$
 
+```{r}
+AR <- c(-0.4)
+MA <- c(0.5, -0.25)
+m <- 4
+ARMAtoMA(ar = AR, ma = MA, lag.max = m)
+```
 
+$$
+\begin{split}
+  \psi_0 &= 1 \\
+  \psi_1 - \phi_1 \psi_0 &= \theta_1 + \theta_2 \\
+  \psi_1 &= \phi_1 \psi_0 + \theta_1 + \theta_2 \\
+  \psi_1 &= (-0.4) (1) + (-0.5) + 0.25 \\
+\end{split}
+$$
+
+**This one I'm not quite sure on...**
+
+
+## (b) $Y_t = 2Y_{t - 1} - Y_{t - 2} + e_t$
+
+This was shown to be an IMA(2, 0).
+
+By equation 4.1.1.
+
+$$
+\begin{split}
+  Y_t &= e_t + \psi_1 e_{t - 1} + \psi_2 e_{t - 2} + \hdots \\
+\end{split}
+$$
+
+But since we only have $W_t = e_t$, then we only have $\psi_0 = 1$, and $\psi_j = 0, j = 1, 2, 3, 4$
+
+## (c) $Y_t = 0.5 Y_{t - 1} - 0.5 Y_{t - 2} + e_t - 0.1 e_{t - 1}$
+
+Recall this was shown to be an ARMA(2, 1) with $\phi_1 = 0.5, \phi_2 = -0.5$ and $\theta_1 = -0.1$.
+
+$$
+\begin{split}
+  \psi_0 &= 1 \\
+  \psi_1 - \phi_1 \psi_0 &= \theta_1 \\
+  \psi_1 &= \phi_1 \psi_0 + \theta_1 \\
+  &= 0.5 (1) + 0.1 = 0.6 \\
+  \psi_2 &= \phi_1 \psi_1 + \phi_2 \psi_0 \\
+  &= 0.5 (0.6) + (-0.5) (1) = -0.2 \\
+  \psi_3 &= \phi_1 \psi_2 + \phi_1 \psi_1\\
+  &= 0.5 (-0.2) + (-0.5) (0.6) = (-0.1) + (-0.3) = -0.4 \\
+  \psi_4 &= \phi_1 \psi_3 + \phi_1 \psi_2\\
+  &= 0.5 (-0.4) + (-0.5) (-0.2) = (-0.2) + 0.1 = -0.1 \\
+\end{split}
+$$
+
+Checking our answers,
+
+```{r}
+AR <- c(0.5, -0.5)
+MA <- c(0.1)
+ARMAtoMA(ar = AR, ma = MA, lag.max = 4)
+```
 
 \begin{flushright}
   $\blacksquare$
