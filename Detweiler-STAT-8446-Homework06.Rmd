@@ -12,21 +12,265 @@ library(TSA)
 
 # 1. Consider three seperate AR(1) models: $\phi = 0.1, \phi = 0.5$, and $\phi = 0.8$.
 
-```{r}
-phi1 <- 0.1
-phi2 <- 0.5
-phi3 <- 0.8
+## (a) For each model, calculate $\rho_1$ and $\rho_7$.
+
+$$
+\begin{split}
+  Y_t &= 0.1 Y_{t - 1} - e_t \\
+\end{split}
+$$
+
+We must find $\rho_k = \frac{\gamma_k}{\gamma_0}$. First we need $\gamma_0$ in each case.
+
+$$
+\begin{split}
+  \gamma_0 &= Cov(Y_t, Y_t) = Var(Y_t) \\
+  &= Var(0.1 Y_{t - 1} - e_t) \\
+  &= 0.01 Var(Y_{t - 1}) + Var(e_t) \\
+  &= 0.01 \gamma_0 + \sigma_e^2 \\
+  \gamma_0 - 0.01 \gamma_0 &= \sigma_e^2 \\
+  0.99 \gamma_0 &= \sigma_e^2 \\
+  \gamma_0 &= \frac{\sigma_e^2}{0.99} \\
+\end{split}
+$$
+
+More generally, $\gamma_0 = \frac{\sigma_e^2}{1 - \phi_1^2}$.
+
+We will expand the Yule-Walker equations,
+
+$$
+\begin{split}
+  \gamma_k &= \phi_1 \gamma_{k - 1} \\
+  \rho_k &= \phi_1 \rho_{k - 1} \\
+\end{split}
+$$
+
+So we now have
+
+$$
+\begin{split}
+  \gamma_1 &= \phi_1 \gamma_0 \\
+  &= 0.1 \gamma_0 \\
+  &= \frac{0.1 \sigma_e^2}{0.99} \\
+  &= 0.1010101 \sigma_e^2 \\
+  \rho_1 &= \frac{\gamma_1}{\gamma_0} \\
+  &= \frac{0.1010101 \sigma_e^2}{\frac{\sigma_e^2}{0.99}} \\
+  &= 0.1010101 (0.99) \\
+  &= 0.1 \\
+  &= \phi_1 \\
+  \rho_2 &= \phi_1 \rho_1 \\
+  \rho_2 &= 0.1 (0.1) \\
+  \rho_2 &= \phi_1^2 \\
+\end{split}
+$$
+
+Now we can see the pattern emerging. $\rho_k = \phi_1^k$, and hence $\rho_7 = \phi_1^7 = (0.1)^7$.
+
+The autocorrelation function shows a decaying sequence.
+
+```{r, fig.align="center", fig.height=4, fig.width=5, echo=FALSE}
+rhos <- c(1, 0.1, (0.1)^2, (0.1)^3, (0.1)^4, (0.1)^5, (0.1)^6, (0.1)^7)
+plot(0:7, rhos, main = "ACF for first 7 lags for phi_1 = 0.1")
+segments(x0 = 0:7, y0 = 0, x1 = 0:7, y1 = rhos)
 ```
 
-## (a) For each model, calculate $\rho_1$ and $\rho_7$.
+\pagebreak
+
+Now, since we've generalized it, we can easily apply this to the other models.
+
+$$
+\begin{split}
+  Y_t &= 0.5 Y_{t - 1} - e_t \\
+\end{split}
+$$
+
+$$
+\begin{split}
+  \gamma_0 &= \frac{\sigma_e^2}{1 - \phi_1^2} \\
+  &= \frac{\sigma_e^2}{1 - 0.5} \\
+  &= \frac{\sigma_e^2}{0.5} \\
+  \gamma_1 &= \phi_1 \gamma_0 \\
+  &= 0.5 \gamma_0 \\
+  &= \frac{0.5 \sigma_e^2}{0.5} \\
+  &= \sigma_e^2 \\
+  \rho_1 &= \frac{\gamma_1}{\gamma_0} \\
+  &= \frac{\sigma_e^2}{\frac{\sigma_e^2}{0.5}} \\
+  &= 0.5 \\
+  &= \phi_1 \\
+  \rho_2 &= \phi_1 \rho_1 \\
+  \rho_2 &= 0.5 (0.5) \\
+  \rho_2 &= \phi_1^2 \\
+  \rho_7 &= \phi_1^7 = 0.5^7 \\
+\end{split}
+$$
+
+```{r, fig.align="center", fig.height=4, fig.width=5, echo=FALSE}
+rhos <- c(1, 0.5, (0.5)^2, (0.5)^3, (0.5)^4, (0.5)^5, (0.5)^6, (0.5)^7)
+plot(0:7, rhos, main = "ACF for first 7 lags for phi_1 = 0.5")
+segments(x0 = 0:7, y0 = 0, x1 = 0:7, y1 = rhos)
+```
+
+\pagebreak
+
+$$
+\begin{split}
+  Y_t &= 0.8 Y_{t - 1} - e_t \\
+\end{split}
+$$
+
+$$
+\begin{split}
+  \rho_1 &= \phi_1 = 0.8 \\
+  \rho_7 &= \phi_1^7 = 0.2097152 \\
+\end{split}
+$$
+
+```{r, fig.align="center", fig.height=4, fig.width=5, echo=FALSE}
+rhos <- c(1, 0.8, (0.8)^2, (0.8)^3, (0.8)^4, (0.8)^5, (0.8)^6, (0.8)^7)
+plot(0:7, rhos, main = "ACF for first 7 lags for phi_1 = 0.8", ylim=c(0, 1))
+segments(x0 = 0:7, y0 = 0, x1 = 0:7, y1 = rhos)
+```
+
+\pagebreak
 
 ## (b) For each model, calculate $Var(r_1)$ and $Var(r_7)$.
 
+We define the sample ACF as 
+$$
+\begin{split}
+  r_k &= \frac{\sum_{t = k + 1}^n (Y_t - \overline{Y}) (Y_{t - k} - \overline{Y})}{\sum_{t = 1}^n (Y_t - \overline{Y})^2} \\
+\end{split}
+$$
+
+For an AR(1) process with $\rho_k = \phi^k$ for $k > 0$, 
+
+$$
+\begin{split}
+  Var(r_k) &\approx \frac{1}{n} \bigg[ \frac{(1 + \phi^2)(1 - \phi^{2k})}{1 - \phi^2} - 2k\phi^{2k} \bigg] \\
+\end{split}
+$$
+
+We'll create a helper function to calculate the numerical parts of the variance in \textsf{R}:
+
+```{r}
+partial.var.rk <- function(phi, k) {
+  return(((1 + phi^2) * (1 - phi^(2 * k)) / (1 - phi^2) - 2 * k * phi^(2 * k)))
+}
+```
+
+So for the given models and $k = 1, 7$, we have
+
+## Model 1, $\phi_1 = 0.1$
+
+```{r, include=FALSE}
+phi <- 0.1
+```
+
+$$
+\begin{split}
+  Var(r_1) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{2})}{1 - (`r phi`)^2} - 2(`r phi`)^{2} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 1)`}{n}  \\
+  Var(r_7) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{14})}{1 - (`r phi`)^2} - 14(`r phi`)^{14} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 7)`}{n}  \\
+\end{split}
+$$
+
+## Model 2, $\phi_1 = 0.5$
+```{r, include=FALSE}
+phi <- 0.5
+```
+
+$$
+\begin{split}
+  Var(r_1) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{2})}{1 - (`r phi`)^2} - 2(`r phi`)^{2} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 1)`}{n}  \\
+  Var(r_7) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{14})}{1 - (`r phi`)^2} - 14(`r phi`)^{14} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 7)`}{n}  \\
+\end{split}
+$$
+
+## Model 3, $\phi_1 = 0.8$
+```{r, include=FALSE}
+phi <- 0.8
+```
+
+$$
+\begin{split}
+  Var(r_1) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{2})}{1 - (`r phi`)^2} - 2(`r phi`)^{2} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 1)`}{n}  \\
+  Var(r_7) &\approx \frac{1}{n} \bigg[ \frac{(1 + (`r phi`)^2)(1 - (`r phi`)^{14})}{1 - (`r phi`)^2} - 14(`r phi`)^{14} \bigg] \\
+  &\approx \frac{`r partial.var.rk(phi, 7)`}{n}  \\
+\end{split}
+$$
+
 ## (c) For each model, use the \texttt{arima.sim} function to simulate a time series of length $n = 60$. Then use the \texttt{acf} function to calculate $r_1$ and $r_7$. Remember to set up a random seed for your simulation.
+
+```{r}
+set.seed(0)
+
+phi1 <- 0.1
+
+sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
+
+```{r}
+phi1 <- 0.5
+
+sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
+
+```{r}
+phi1 <- 0.8
+
+sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
 
 ## (d) Based on your results in parts (a) and (b), are $r_1$ and $r_7$ from part (c) within 2 standard deviations of $\rho_1$ and $\rho_7$ respectively?
 
 ## (e) Repeat part (c) for 1000 times. Draw histograms for $r_1$'s and $r_7$'s for each model. What proportion of $r_1$'s and $r_7$'s are within 2 standard deviations of $\rho_1$ and $\rho_7$?
+
+```{r}
+
+phi1 <- 0.1
+
+sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
+
+```{r}
+phi1 <- 0.5
+
+sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
+
+```{r}
+phi1 <- 0.8
+
+sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
+
+r <- acf(sim)
+r[1]
+r[7]
+```
 
 \begin{flushright}
   $\blacksquare$
@@ -39,7 +283,28 @@ phi3 <- 0.8
 
 ## (a) Use the \texttt{arima.sim} function to simulate three time series of lengths $n = 15$, 75, and 100.
 
+```{r}
+phi1 <- 0.6
+
+sim.1 <- arima.sim(n = 15, model = list(ar=(phi1)))
+sim.2 <- arima.sim(n = 75, model = list(ar=(phi1)))
+sim.3 <- arima.sim(n = 100, model = list(ar=(phi1)))
+
+r.1 <- acf(sim.1)
+r.2 <- acf(sim.2)
+r.3 <- acf(sim.3)
+```
+
 ## (b) For each set of simulated data, calculate $r_1$.
+
+```{r}
+r.1[1]
+r.1[7]
+r.2[1]
+r.2[7]
+r.3[1]
+r.3[7]
+```
 
 ## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
 
@@ -55,6 +320,17 @@ phi3 <- 0.8
 
 ## (a) Use the \texttt{arima.sim} function to simulate three time series of lengths $n$ = 15, 75, and 150. Note that \textsf{R} uses the negative of the MA coefficients.
 
+```{r}
+theta1 <- -0.6
+
+sim.1 <- arima.sim(n = 15, model = list(ma=(theta1)))
+sim.2 <- arima.sim(n = 75, model = list(ma=(theta1)))
+sim.3 <- arima.sim(n = 100, model = list(ma=(theta1)))
+
+r.1 <- acf(sim.1)
+r.2 <- acf(sim.2)
+r.3 <- acf(sim.3)
+```
 ## (b) For each set of simulated data, calculate $r_1$.
 
 ## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
@@ -69,12 +345,38 @@ phi3 <- 0.8
 
 # 4. The dataset \texttt{days} contains accounting data. The data is the number of days it took to receive payment for 130 consecutive orders from a particular distributor.
 
+```{r}
+data(days)
+```
+
 ## (a) Plot the times series. Are there any unusual values?
+
+```{r}
+plot(days)
+day1 <- which(days == 55)
+day2 <- which(days == 49)
+day3 <- which(days == 63)
+```
+
+There are three highly unusual days, at days `r day1`, `r day2`, and `r day3`.
 
 ## (b) Draw the sample ACF and sample PACF plots. What do you find?
 
-## (c) Replace the unusual values with a value of 35 days. Redraw the sample ACF and sample PACF plots. Are they different from part (b)?
+```{r}
+acf(days)
+pacf(days)
+```
 
+## (c) Replace the unusual values with a value of 35 days. Redraw the sample ACF and sample PACF plots. Are they different from part (b)?
+```{r}
+days.tmp <- days
+days.tmp[which(days.tmp == 55)] <- 35
+days.tmp[which(days.tmp == 49)] <- 35
+days.tmp[which(days.tmp == 63)] <- 35
+plot(days.tmp)
+acf(days.tmp)
+pacf(days.tmp)
+```
 ## (d) What ARMA model would you specify for this series after removing the outliers? Explain.
 
 \begin{flushright}

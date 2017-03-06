@@ -18,6 +18,8 @@ This appears to be an ARMA(2, 2), with $\phi_1 = 0.6$ and $\phi_2 = 0.4$, $\thet
 
 We must verify the assumptions that it is stationary and invertible.
 
+We have
+
 $$
 \begin{split}
   \phi_1 + \phi_2 &= 0.6 + 0.4 = 1.0 \nless 1.0\\
@@ -26,120 +28,11 @@ $$
 \end{split}
 $$
 
-Here the first constraint is violated, so we transform this to the first difference, $\nabla_t = Y_t - Y_{t - 1}$ \\
-
-$$
-\begin{split}
-  Y_t &= 0.6 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
-  Y_t - Y_{t - 1} &= (0.6 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2}) - Y_{t - 1} \\
-  \nabla Y_t &= 0.6 Y_{t - 1} - Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
-  &= -0.4 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
-\end{split}
-$$
-
-Letting $W_t = \nabla Y_t$, we have
-
-$$
-\begin{split}
-  W_t &= -0.4 W_{t - 1} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
-\end{split}
-$$
-
-Now this appears to be an ARMA(1, 2) with
-
-$$
-\begin{split}
-  \phi_1 &= -0.4 \\
-  \theta_1 &= -0.5 \\
-  \theta_2 &= 0.25 \\
-\end{split}
-$$
-
-Checking constraints, we have
-
-$$
-\begin{split}
-  \phi_1 + \phi_2 &= -0.4 + 0 = -1.0 < 1 \\
-  \phi_2 - \phi_1 &= 0 - (-0.4) = 0.4 < 1 \\
-  |\phi_2| &= 0 < 1 \\
-\end{split}
-$$
-
-Likewise, checking for invertibility, we have
-
-$$
-\begin{split}
-  \theta_1 + \theta_2 &= -0.5 + 0.25 = -0.25 < 1\\
-  \theta_2 - \theta_1 &= 0.25 - (-0.5) = 0.75 < 1 \\
-  |\theta_2| &= 0.25 < 1 \\
-\end{split}
-$$
-
-The constraints are satisfied, and thus the first difference $W_t$ is ARMA(1, 2). Therefore, $Y_t$ is ARIMA(1, 1, 2). 
+Here the first constraint is violated, so 
 
 ## (b) $Y_t = 2 Y_{t - 1} - Y_{t - 2} + e_t$
 
-Verifying the assumptions that it is stationary and invertible,
-
-$$
-\begin{split}
-  \phi_1 + \phi_2 &= 2 + (-1) = 1.0 \nless 1.0\\
-  \phi_2 - \phi_1 &= (-1) - 2 = -3 < 1 \\
-  |\phi_2| &= 1 \nless 1 \\
-\end{split}
-$$
-
-Since the assumptions are violated, this is not stationary as an AR(2) model.
-
-We can actually rewrite this as $\nabla Y_t$, and we have
-
-$$
-\begin{split}
-  Y_t &= Y_{t - 1} + Y_{t - 1} - Y_{t - 2} + e_t \\
-  Y_t - Y_{t - 1} &=  Y_{t - 1} - Y_{t - 2} + e_t \\
-  \nabla Y_{t} &=  Y_{t - 1} - Y_{t - 2} + e_t \\
-\end{split}
-$$
-
-Verifying the assumptions for stationary, we have
-
-$$
-\begin{split}
-  \phi_1 + \phi_2 &= 1 + (-1) = 0 < 1.0\\
-  \phi_2 - \phi_1 &= 1 - (-1) = 2 \nless 1 \\
-  |\phi_2| &= 1 \nless 1 \\
-\end{split}
-$$
-
-So this is still not stationary.
-
-Now we look at the second difference,
-
-$$
-\begin{split}
-  \nabla^2 Y_{t} &= \nabla (\nabla Y_t) \\
-  W_t &= \nabla (Y_t - Y_{t - 1}) = Y_t - 2 Y_{t - 1} + Y_{t - 2} \\
-\end{split}
-$$
-
-Now, since $W_t = Y_t - 2 Y_{t - 1} + Y_{t - 2} = e_t$, the second difference is a white noise process. Thus, it is an IMA(2, 0).
-
-
 ## (c) $Y_t = 0.5 Y_{t - 1} - 0.5 Y_{t - 2} + e_t - 0.1 e_{t - 1}$
-
-This seems to be an ARMA(2, 1) with $\phi_1 = 0.5, \phi_2 = -0.5$ and $\theta_1 = -0.1$.
-
-The conditions for stationary hold,
-$$
-\begin{split}
-  \phi_1 + \phi_2 &= 0.5 + (-0.5) = 0 < 1.0\\
-  \phi_2 - \phi_1 &= -0.5 + 0.5 = 0 < 1 \\
-  |\phi_2| &= 0.5 < 1 \\
-\end{split}
-$$
-
-And since $|\theta_1| = 0.1 < 1$, then it is also invertible.
-
 
 \begin{flushright}
   $\blacksquare$
@@ -150,75 +43,6 @@ And since $|\theta_1| = 0.1 < 1$, then it is also invertible.
 
 # 2. For each ARIMA model described in Question 1, find the numerical values of $\psi_0, \psi_1, \psi_2, \psi_3, \psi_4$ and a recurrence relation for $\psi_k, k > 4$.
 
-## (a) $Y_t = 0.6 Y_{t - 1} + 0.4 Y_{t - 2} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2}$
-
-We saw that this ARIMA(1, 1, 2) could be represented as an ARMA(1, 2) as
-
-$$
-\begin{split}
-  W_t &= -0.4 W_{t - 1} + e_t - 0.5 e_{t - 1} + 0.25 e_{t - 2} \\
-\end{split}
-$$
-
-```{r}
-AR <- c(-0.4)
-MA <- c(0.5, -0.25)
-m <- 4
-ARMAtoMA(ar = AR, ma = MA, lag.max = m)
-```
-
-$$
-\begin{split}
-  \psi_0 &= 1 \\
-  \psi_1 - \phi_1 \psi_0 &= \theta_1 + \theta_2 \\
-  \psi_1 &= \phi_1 \psi_0 + \theta_1 + \theta_2 \\
-  \psi_1 &= (-0.4) (1) + (-0.5) + 0.25 \\
-\end{split}
-$$
-
-**This one I'm not quite sure on...**
-
-
-## (b) $Y_t = 2Y_{t - 1} - Y_{t - 2} + e_t$
-
-This was shown to be an IMA(2, 0).
-
-By equation 4.1.1.
-
-$$
-\begin{split}
-  Y_t &= e_t + \psi_1 e_{t - 1} + \psi_2 e_{t - 2} + \hdots \\
-\end{split}
-$$
-
-But since we only have $W_t = e_t$, then we only have $\psi_0 = 1$, and $\psi_j = 0, j = 1, 2, 3, 4$
-
-## (c) $Y_t = 0.5 Y_{t - 1} - 0.5 Y_{t - 2} + e_t - 0.1 e_{t - 1}$
-
-Recall this was shown to be an ARMA(2, 1) with $\phi_1 = 0.5, \phi_2 = -0.5$ and $\theta_1 = -0.1$.
-
-$$
-\begin{split}
-  \psi_0 &= 1 \\
-  \psi_1 - \phi_1 \psi_0 &= \theta_1 \\
-  \psi_1 &= \phi_1 \psi_0 + \theta_1 \\
-  &= 0.5 (1) + 0.1 = 0.6 \\
-  \psi_2 &= \phi_1 \psi_1 + \phi_2 \psi_0 \\
-  &= 0.5 (0.6) + (-0.5) (1) = -0.2 \\
-  \psi_3 &= \phi_1 \psi_2 + \phi_1 \psi_1\\
-  &= 0.5 (-0.2) + (-0.5) (0.6) = (-0.1) + (-0.3) = -0.4 \\
-  \psi_4 &= \phi_1 \psi_3 + \phi_1 \psi_2\\
-  &= 0.5 (-0.4) + (-0.5) (-0.2) = (-0.2) + 0.1 = -0.1 \\
-\end{split}
-$$
-
-Checking our answers,
-
-```{r}
-AR <- c(0.5, -0.5)
-MA <- c(0.1)
-ARMAtoMA(ar = AR, ma = MA, lag.max = 4)
-```
 
 \begin{flushright}
   $\blacksquare$
@@ -227,34 +51,6 @@ ARMAtoMA(ar = AR, ma = MA, lag.max = 4)
 \pagebreak
 
 # 3. Consider a stationary process $\{Y_t\}$. Show that if $\rho_1  < 0.5$ then $\nabla Y_t$ has a larger variance than $Y_t$.
-
-We will show that $Var(\nabla Y_t) > Var(Y_t)$.
-
-Since $\{Y_t\}$ is stationary, $Var(Y_t) = \gamma_0 = \sigma^2$ is a constant.
-
-We have $Var(\nabla Y_t) = Var(Y_t - Y_{t - 1})$. 
-
-By the properties of variance and letting $k = 1$, 
-$$
-\begin{split}
-  Var(\nabla Y_t) &= Var(Y_t) + Var(Y_{t - k}) - 2Cov(Y_t, Y_{t - k})\\
-  &= \gamma_0 + \gamma_0 - 2 \gamma_{k} \\
-  &= 2 \gamma_0 - 2 \gamma_{k} \\
-  &= 2 (\gamma_0 - \gamma_{k}) \\
-  &= 2 (\gamma_0 - \gamma_{k}) \\
-\end{split}
-$$
-
-Since $\rho_1 = \frac{\gamma_k}{\gamma_0}$, we have
-$$
-\begin{split}
-  Var(\nabla Y_t) &= 2 (\gamma_0 - \frac{\gamma_0}{\gamma_0} \gamma_{k}) \\
-  &= 2 (\gamma_0 - \rho_k \gamma_0) \\
-  &= 2 \gamma_0 (1 - \rho_k) \\
-\end{split}
-$$
-
-Thus, for $\rho_k < 0.5$ for $k = 1$, then $2 (1 - \rho_k) > 1$, and hence when multiplied by $\gamma_0$, is larger than $Var(Y_t) = \gamma_0$.
 
 
 \begin{flushright}
@@ -272,23 +68,20 @@ data(gold)
 ## (a) Construct a time series plot of the price of gold $Y_t$. What are the interesting features of this process?
 
 ```{r, fig.height=4, fig.width=5, fig.align='center'}
-par(cex=1)
-plot(gold, ylab="Gold Price", pch=".")
+plot(gold)
 ```
 
 The price of gold does not seem to be based on a deterministic trend, as we can see it begins to increase in variance after 150 days.
 
 ## (b) Let $W_t = \nabla (\ln Y_t)$, the differences of the logarithms. Construct a time series plot of $W_t$. Does it look stationary?
 
-```{r, fig.height=4, fig.width=5, fig.align='center', warning=FALSE}
+```{r, fig.height=4, fig.width=5, fig.align='center'}
 plot(diff(log(gold)))
-stationary <- adf.test(diff(log(gold)), alternative = "stationary")
+abline(h=-0.02)
+abline(h=0.02)
 ```
 
-This looks heteroskedastic, and therefore not stationary, however, the variance is actually quite small, between `r min(diff(log(gold)))` and `r max(diff(log(gold)))`. 
-
-Performing an Augmented Dickey-Fuller test for stationarity, we have a p-value of `r stationary$p.value`, so we reject the null hypothesis. The difference appears to be stationary.
-
+This looks heteroskedastic, and therefore not stationary. However, the variance is actually quite small.
 
 ## (c) Use the sample ACF to investigate whether $W_t$ is a white noise process.
 
@@ -296,18 +89,8 @@ Performing an Augmented Dickey-Fuller test for stationarity, we have a p-value o
 acf(diff(log(gold)))
 ```
 
-The ACF of the log difference appears to follow a white noise process.
-
 ## (d) Investigate whether $W_t$ is a normal white noise process.
 
-```{r, fig.height=4, fig.width=5, fig.align='center'}
-hist(diff(log(gold)), breaks=100)
-qqnorm(diff(log(gold)))
-qqline(diff(log(gold)))
-gold.test <- shapiro.test(diff(log(gold)))
-```
-
-Although there are some outliers at the extremes, running a Shapiro-Wilk test for normality results in a p-value of `r gold.test$p.value` < 0.05, so we can say this is a normal white noise process.
 
 \begin{flushright}
   $\blacksquare$
