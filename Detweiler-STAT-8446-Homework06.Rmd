@@ -210,31 +210,49 @@ set.seed(0)
 
 phi1 <- 0.1
 
-sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+r1 <- c()
+r7 <- c()
+for (i in 1:1000) {
+  sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+  r <- acf(sim, plot = FALSE)
+  r1 <- c(r1, r[[1]][1])
+  r7 <- c(r7, r[[1]][7])
+}
 
-r <- acf(sim)
-r[1]
-r[7]
+sd(r1)
+sd(r7)
 ```
 
 ```{r}
 phi1 <- 0.5
 
-sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+r1 <- c()
+r7 <- c()
+for (i in 1:1000) {
+  sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+  r <- acf(sim, plot = FALSE)
+  r1 <- c(r1, r[[1]][1])
+  r7 <- c(r7, r[[1]][7])
+}
 
-r <- acf(sim)
-r[1]
-r[7]
+sd(r1)
+sd(r7)
 ```
 
 ```{r}
 phi1 <- 0.8
 
-sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+r1 <- c()
+r7 <- c()
+for (i in 1:1000) {
+  sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+  r <- acf(sim, plot = FALSE)
+  r1 <- c(r1, r[[1]][1])
+  r7 <- c(r7, r[[1]][7])
+}
 
-r <- acf(sim)
-r[1]
-r[7]
+sd(r1)
+sd(r7)
 ```
 
 ## (d) Based on your results in parts (a) and (b), are $r_1$ and $r_7$ from part (c) within 2 standard deviations of $\rho_1$ and $\rho_7$ respectively?
