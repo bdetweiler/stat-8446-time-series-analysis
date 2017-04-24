@@ -1,0 +1,46 @@
+## MA(q)
+
+set.seed(36)
+y = arima.sim(n=100, list(order=c(0,0,1), ma=c(-0.9)), sd=1)
+plot(y,type='o',pch=20)
+acf(y)
+acf(y,ci.type="ma")
+pacf(y)
+TSA::eacf(y)
+
+set.seed(36)
+y = arima.sim(n=100, list(order=c(0,0,2), ma=c(-1,0.6)), sd=1)
+plot(y,type='o',pch=20)
+acf(y)
+acf(y,ci.type="ma")
+pacf(y)
+TSA::eacf(y)
+
+## AR(p)
+
+set.seed(36)
+y = arima.sim(n=100, list(order=c(1,0,0), ar=c(0.9)), sd=1)
+plot(y,type='o',pch=20)
+acf(y)
+acf(y,ci.type="ma")
+pacf(y)
+TSA::eacf(y)
+
+set.seed(36)
+y = arima.sim(n=100, list(order=c(2,0,0), ar=c(1.5,-0.75)), sd=1)
+plot(y,type='o',pch=20)
+acf(y)
+acf(y,ci.type="ma")
+pacf(y)
+TSA::eacf(y)
+
+
+## ARMA(p,q)
+
+set.seed(36)
+y = arima.sim(n=100, list(order=c(1,0,1), ar=c(0.6),ma=c(0.3)), sd=1)
+plot(y,type='o',pch=20)
+acf(y)
+acf(y,ci.type="ma")
+pacf(y)
+TSA::eacf(y)

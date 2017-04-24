@@ -1,0 +1,810 @@
+---
+title: "Homework 8"
+author: "Brian Detweiler"
+date: "April 12, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TSA)
+library(MASS)
+library(forecast)
+library(ggplot2)
+library(zoo)
+library(scales)
+```
+
+# 1. Consider the \texttt{hare} data in the \texttt{TSA} package. Fit an AR(3) model to the square root of the data using maximum likelihood estimation.
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+
+set.seed(48548493)
+data(hare)
+y <- sqrt(hare)
+plot(y, main="Square Root transformation of hare")
+
+fit <- arima(y, order=c(3, 0, 0), method = "ML")
+fit$coef
+```
+
+$$
+\begin{split}
+Y_t &= \phi_1 Y_{t - 1} + \phi_2 Y_{t - 2} + \phi_3 Y_{t - 3} + e_t \\
+\phi_1 &= `r fit$coef[[1]]` \\
+\phi_2 &= `r fit$coef[[2]]` \\
+\phi_3 &= `r fit$coef[[3]]` \\
+\end{split}
+$$
+
+## (a) Use the four different Bootstrap resampling methods to get the 95% confidence intervals for the five parameters: $\phi_1, \phi_2, \phi_3, \mu, \sigma_e^2$.
+
+### Bootstrap Method 1
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+b1.phi1.sim <- rep(NA, 1000)
+b1.phi2.sim <- rep(NA, 1000)
+b1.phi3.sim <- rep(NA, 1000)
+b1.mu.sim <- rep(NA, 1000)
+b1.sigmae2.sim <- rep(NA, 1000)
+
+
+b1 <- y
+f <- arima(b1, order=c(3,0,0))
+phi <- f$coef
+
+for (i in 1:1000) {
+ 
+  b1 <- y
+ 
+  e <- rep(NA, length(y) - 3)
+  for (j in 4:length(y)) {
+    e[j - 3] <- rnorm(1)
+    b1[j] <- sum(phi[1:3] * (b1[(j - 1):(j - 3)] - phi[4])) + phi[4] + e[j - 3]
+  }
+  
+  f1 <- arima(b1, order=c(3, 0 ,0), method="ML")
+  b1.phi1.sim[i] <- f1$coef[[1]]
+  b1.phi2.sim[i] <- f1$coef[[2]]
+  b1.phi3.sim[i] <- f1$coef[[3]]
+  b1.mu.sim[i] <- mean(b1)
+  b1.sigmae2.sim[i] <- var(e)
+  
+}
+
+hist(b1.phi1.sim, main="Bootstrap Method 1, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b1.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b1.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b1.phi2.sim, main="Bootstrap Method 1, Phi 2", breaks=100)
+phi2.ci.lower <- quantile(b1.phi2.sim, c(0.025,0.975))[[1]]
+phi2.ci.upper <- quantile(b1.phi2.sim, c(0.025,0.975))[[2]]
+abline(v=phi2.ci.lower, col="red")
+abline(v=phi2.ci.upper, col="red")
+
+hist(b1.phi3.sim, main="Bootstrap Method 1, Phi 3", breaks=100)
+phi3.ci.lower <- quantile(b1.phi3.sim, c(0.025,0.975))[[1]]
+phi3.ci.upper <- quantile(b1.phi3.sim, c(0.025,0.975))[[2]]
+abline(v=phi3.ci.lower, col="red")
+abline(v=phi3.ci.upper, col="red")
+
+hist(b1.mu.sim, main="Bootstrap Method 1, Mu", breaks=100)
+mu.ci.lower <- quantile(b1.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b1.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b1.sigmae2.sim, main="Bootstrap Method 1, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b1.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b1.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \phi_1 &: (`r phi1.ci.lower`, `r phi1.ci.upper`) \\
+  \phi_2 &: (`r phi2.ci.lower`, `r phi2.ci.upper`) \\
+  \phi_3 &: (`r phi3.ci.lower`, `r phi3.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+\pagebreak
+
+### Bootstrap Method 2
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b2.phi1.sim <- rep(NA, 1000)
+b2.phi2.sim <- rep(NA, 1000)
+b2.phi3.sim <- rep(NA, 1000)
+b2.mu.sim <- rep(NA, 1000)
+b2.sigmae2.sim <- rep(NA, 1000)
+
+
+b2 <- y
+f <- arima(b2, order=c(3,0,0))
+phi <- f$coef
+
+for (j in 1:1000) {
+ 
+  b2 <- y[1:3]
+  for (i in 4:length(y)){
+    b2[i] = sum(phi[1:3] * (b2[(i - 1):(i - 3)] - phi[4])) + phi[4] + sample(f$residuals, 1)
+  }
+ 
+  e <- rep(NA, length(y) - 3)
+  for (i in 4:length(y)) {
+    e[i - 3] <- rnorm(1)
+    b2[i] <- sum(phi[1:3] * (b2[(i - 1):(i - 3)] - phi[4])) + phi[4] + e[i - 3]
+  }
+  
+  f1 <- arima(b2, order=c(3, 0 ,0), method="ML")
+  b2.phi1.sim[j] <- f1$coef[[1]]
+  b2.phi2.sim[j] <- f1$coef[[2]]
+  b2.phi3.sim[j] <- f1$coef[[3]]
+  b2.mu.sim[j] <- mean(b2)
+  b2.sigmae2.sim[j] <- var(e)
+  
+}
+
+
+hist(b2.phi1.sim, main="Bootstrap Method 2, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b2.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b2.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b2.phi2.sim, main="Bootstrap Method 2, Phi 2", breaks=100)
+phi2.ci.lower <- quantile(b2.phi2.sim, c(0.025,0.975))[[1]]
+phi2.ci.upper <- quantile(b2.phi2.sim, c(0.025,0.975))[[2]]
+abline(v=phi2.ci.lower, col="red")
+abline(v=phi2.ci.upper, col="red")
+
+hist(b2.phi3.sim, main="Bootstrap Method 2, Phi 3", breaks=100)
+phi3.ci.lower <- quantile(b2.phi3.sim, c(0.025,0.975))[[1]]
+phi3.ci.upper <- quantile(b2.phi3.sim, c(0.025,0.975))[[2]]
+abline(v=phi3.ci.lower, col="red")
+abline(v=phi3.ci.upper, col="red")
+
+hist(b2.mu.sim, main="Bootstrap Method 2, Mu", breaks=100)
+mu.ci.lower <- quantile(b2.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b2.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b2.sigmae2.sim, main="Bootstrap Method 2, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b2.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b2.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \phi_1 &: (`r phi1.ci.lower`, `r phi1.ci.upper`) \\
+  \phi_2 &: (`r phi2.ci.lower`, `r phi2.ci.upper`) \\
+  \phi_3 &: (`r phi3.ci.lower`, `r phi3.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+### Bootstrap Method 3
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b3.phi1.sim <- rep(NA, 1000)
+b3.phi2.sim <- rep(NA, 1000)
+b3.phi3.sim <- rep(NA, 1000)
+b3.mu.sim <- rep(NA, 1000)
+b3.sigmae2.sim <- rep(NA, 1000)
+
+
+b3 <- y
+f <- arima(b3, order=c(3,0,0))
+phi <- f$coef
+
+for (j in 1:1000) {
+ 
+  b3 <- y[1:3]
+  for (i in 4:length(y)){
+    b3 <- arima.sim(n=100, model=list(ar=phi[1:3]), sd=sqrt(f$sigma2)) + phi[4]
+    b3 <- b3[-(1:(100-31))]
+  }
+  
+  f1 <- arima(b3, order=c(3, 0 ,0), method="ML")
+  b3.phi1.sim[j] <- f1$coef[[1]]
+  b3.phi2.sim[j] <- f1$coef[[2]]
+  b3.phi3.sim[j] <- f1$coef[[3]]
+  b3.mu.sim[j] <- mean(b3)
+  b3.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b3.phi1.sim, main="Bootstrap Method 3, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b3.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b3.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b3.phi2.sim, main="Bootstrap Method 3, Phi 2", breaks=100)
+phi2.ci.lower <- quantile(b3.phi2.sim, c(0.025,0.975))[[1]]
+phi2.ci.upper <- quantile(b3.phi2.sim, c(0.025,0.975))[[2]]
+abline(v=phi2.ci.lower, col="red")
+abline(v=phi2.ci.upper, col="red")
+
+hist(b3.phi3.sim, main="Bootstrap Method 3, Phi 3", breaks=100)
+phi3.ci.lower <- quantile(b3.phi3.sim, c(0.025,0.975))[[1]]
+phi3.ci.upper <- quantile(b3.phi3.sim, c(0.025,0.975))[[2]]
+abline(v=phi3.ci.lower, col="red")
+abline(v=phi3.ci.upper, col="red")
+
+hist(b3.mu.sim, main="Bootstrap Method 3, Mu", breaks=100)
+mu.ci.lower <- quantile(b3.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b3.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b3.sigmae2.sim, main="Bootstrap Method 3, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b3.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b3.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \phi_1 &: (`r phi1.ci.lower`, `r phi1.ci.upper`) \\
+  \phi_2 &: (`r phi2.ci.lower`, `r phi2.ci.upper`) \\
+  \phi_3 &: (`r phi3.ci.lower`, `r phi3.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+\pagebreak
+
+
+### Bootstrap Method 4
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b4.phi1.sim <- rep(NA, 1000)
+b4.phi2.sim <- rep(NA, 1000)
+b4.phi3.sim <- rep(NA, 1000)
+b4.mu.sim <- rep(NA, 1000)
+b4.sigmae2.sim <- rep(NA, 1000)
+
+
+b4 <- y
+f <- arima(b4, order=c(3,0,0))
+phi <- f$coef
+
+for (j in 1:1000) {
+ 
+  b4 <- y[1:3]
+  for (i in 4:length(y)){
+    b4 <- arima.sim(n=100, model=list(ar=phi[1:3]), rand.gen=function(n, r=f$residuals){ sample(r, n, replace=TRUE) }) + phi[4]
+    b4 <- b4[-(1:(100 - 31))]
+  }
+  
+  f1 <- arima(b4, order=c(3, 0 ,0), method="ML")
+  b4.phi1.sim[j] <- f1$coef[[1]]
+  b4.phi2.sim[j] <- f1$coef[[2]]
+  b4.phi3.sim[j] <- f1$coef[[3]]
+  b4.mu.sim[j] <- mean(b4)
+  b4.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b4.phi1.sim, main="Bootstrap Method 4, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b4.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b4.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b4.phi2.sim, main="Bootstrap Method 4, Phi 2", breaks=100)
+phi2.ci.lower <- quantile(b4.phi2.sim, c(0.025,0.975))[[1]]
+phi2.ci.upper <- quantile(b4.phi2.sim, c(0.025,0.975))[[2]]
+abline(v=phi2.ci.lower, col="red")
+abline(v=phi2.ci.upper, col="red")
+
+hist(b4.phi3.sim, main="Bootstrap Method 4, Phi 3", breaks=100)
+phi3.ci.lower <- quantile(b4.phi3.sim, c(0.025,0.975))[[1]]
+phi3.ci.upper <- quantile(b4.phi3.sim, c(0.025,0.975))[[2]]
+abline(v=phi3.ci.lower, col="red")
+abline(v=phi3.ci.upper, col="red")
+
+hist(b4.mu.sim, main="Bootstrap Method 4, Mu", breaks=100)
+mu.ci.lower <- quantile(b4.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b4.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b4.sigmae2.sim, main="Bootstrap Method 4, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b4.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b4.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+
+```
+
+\pagebreak
+
+## (b) Construct a time series plot and a sample ACF plot of the residuals. Perform the Ljung-Box test for all values of $K$ between 4 and 20 inclusive. Based on these 3 things does it seem like an AR(3) is a suitable model? 
+
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+f <- arima(y, order=c(3,0,0))
+plot(resid(f), main="Residuals of hare")
+stats::acf(resid(f))
+for (k in 4:20) {
+  bt <- Box.test(y, lag=k, type="Ljung-Box")
+  print(paste0("K = ", k))
+  print(paste0("p-value = ", bt$p.value))
+}
+```
+
+While the ACF appears to be white noise, the residuals plot appears to have decreased variance in the middle and increased variance toward the end. The Ljung-Box tests have p-values << 0.05 for all values of $K$, and thus we reject the null hypothesis that these are i.i.d., so we must concluede that an AR(3) may not be the best fit model for this series.
+
+## (c) Perform a runs test on the standardized residuals from this model. Comment on your findings. 
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+runs.test(factor(residuals(f) > median(residuals(f))))
+```
+
+With a p-value >> 0.05, there do not appear to be any patterns in the residuals.
+
+## (d) Do a Normal Quantile plot of the residuals and perform the Shapiro-Wilk test for Normality. Comment on your findings. 
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+qqn <- qqnorm(residuals(f))
+qqline(residuals(f))
+r.squared <- cor(qqn$x, qqn$y)
+
+shapiro.wilk.test <- shapiro.test(x = residuals(f))
+
+```
+
+The qq-plot strongly suggests a normal distribution, with $R^2 =$ `r r.squared`, however the Shapiro-Wilk test results in a p-value of `r shapiro.wilk.test$p.value`, which is not statistically significant, and therefore we should not say the residuals are i.i.d.
+
+## (e) Look at the model fit, are there any parameters that are not significantly different from zero? If so, refit the model with those parameters fixed to be zero. In terms of AIC, does this model fit better? Check the model diagnostics, and comment on your findings.
+
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit <- arima(y, order=c(3,0,0))
+fit
+```
+
+$\phi_2$ is `r fit$coef[[2]]`, but has a standard error of 0.2942, and therefore overlaps with 0. We can fix this parameter and refit the model.
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+refit <- arima(y, order = c(3, 0, 0), fixed = c(NA, 0, NA, NA), transform.pars = FALSE)
+refit
+```
+
+We see that the AIC does improve on the refitted model.
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. At the end of Chapter 6 we looked at fitting an ARIMA model to the log of the \texttt{oil.price} data. It was suggested that three possible models for the first difference of the log of the oil price would be an AR(1), an AR(4), and a MA(1). 
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+data(oil.price)
+y <- diff(log(oil.price))
+plot(y)
+```
+
+## AR(1) Model
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit.ar1 <- arima(y, order = c(1, 0, 0), method="ML")
+fit.ar1
+r.ar1 <- residuals(fit.ar1)
+plot(r.ar1)
+acf(r.ar1)
+qqn <- qqnorm(r.ar1)
+qqline(r.ar1)
+r.squared.ar1 <- cor(qqn$x, qqn$y)
+r.squared.ar1
+shapiro.test(r.ar1)
+```
+
+## AR(4) Model
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit.ar4 <- arima(y, order = c(4, 0, 0), method="ML")
+fit.ar4
+r.ar4 <- residuals(fit.ar4)
+plot(r.ar4)
+acf(r.ar4)
+qqn <- qqnorm(r.ar4)
+qqline(r.ar4)
+r.squared.ar4 <- cor(qqn$x, qqn$y)
+r.squared.ar4
+shapiro.test(r.ar4)
+```
+
+
+## MA(1) Model
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit.ma1 <- arima(y, order = c(0, 0, 1), method="ML")
+fit.ma1
+r.ma1 <- residuals(fit.ma1)
+plot(r.ma1)
+acf(r.ma1)
+qqn <- qqnorm(r.ma1)
+qqline(r.ma1)
+r.squared.ma1 <- cor(qqn$x, qqn$y)
+r.squared.ma1
+shapiro.test(r.ma1)
+```
+
+## (a) Estimate all of these models using maximum likelihood and compare them using AIC.
+
+We have the following AICs:
+
+ * AR(1): `r fit.ar1$aic`
+ * AR(4): `r fit.ar4$aic`
+ * MA(1): `r fit.ma1$aic`
+
+## (b) Are all parameters in each model signiffcantly different from zero? (An easy check, are they at least 2 standard deviations away from 0)? If there are parameters that are not signiffcantly different from zero, fit a new model with those parameters removed. Compare to the three models in part (a).
+
+In the AR(4) model, $\phi_3$ overlaps with 0, so we can fix it.
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+refit.ar4 <- arima(y, order = c(4, 0, 0), method="ML", fixed=c(NA, NA, 0, NA, NA), transform.pars=FALSE)
+refit.ar4
+r.refit.ar4 <- residuals(refit.ar4)
+plot(r.refit.ar4)
+acf(r.refit.ar4)
+qqn <- qqnorm(r.refit.ar4)
+qqline(r.refit.ar4)
+r.squared.refit.ar4 <- cor(qqn$x, qqn$y)
+r.squared.refit.ar4
+shapiro.test(r.refit.ar4)
+```
+
+We can see that the refitted model has a smaller AIC than the original AR(4), and thus we would choose this model over the original.
+
+## (c) Does it seem like the AR(4) is an overfit? If so, fit a more appropriate model instead. 
+
+Yes. The better choice, according to AIC, is the simpler MA(1), which we have already fitted previously.
+
+## (d) Perform the diagnostics on the AR(1), AR(4), MA(1), and any additional model fit in part (c).
+
+See above.
+
+## (e) Which of the models you considered in (d) would you prefer?
+
+All of these models have a slight amount of autocorrelation in the residuals, but they are also normally distriubted. Based on the AIC and the principle of parsimony, we would select the MA(1) model.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Recall the \texttt{days} dataset from homework assignment 6, and again replace the 63rd, 106th, and 129th observations with 35.
+
+```{r}
+data(days)
+days[63] <- 35
+days[106] <- 35
+days[129] <- 35
+
+y <- days
+
+# Hey. I got drunk and deleted Snapchat the other night. It was draining my phone's battery and becoming too much of a distraction while I need to be working. I'm sorry, I should have told you first. 
+```
+
+
+## (a) Fit an AR(2) and an MA(2) model. Compare them using AIC.
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit.ar2 <- arima(y, order = c(2, 0, 0), method="ML")
+fit.ar2
+```
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+fit.ma2 <- arima(y, order = c(0, 0, 2), method="ML")
+fit.ma2
+```
+
+The AR(2) has a slightly smaller AIC than the MA(1). 
+
+## (b) Use the four different Bootstrap resampling methods to get the 95% confidence intervals for $\theta_1, \theta_2, \mu, \sigma_e^2$ in the MA(2) model.
+
+### Bootstrap Method 1
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+b1.theta1.sim <- rep(NA, 1000)
+b1.theta2.sim <- rep(NA, 1000)
+b1.mu.sim <- rep(NA, 1000)
+b1.sigmae2.sim <- rep(NA, 1000)
+
+b1 <- y
+f <- arima(b1, order=c(0, 0, 2))
+theta <- f$coef
+
+for (i in 1:1000) {
+ 
+  b1 <- y
+ 
+  e <- rep(NA, length(y) - 2)
+  for (j in 3:length(y)) {
+    e[j - 2] <- rnorm(1)
+    b1[j] <- sum(theta[1:2] * (b1[(j - 1):(j - 2)] - theta[3])) + theta[3] + e[j - 2]
+  }
+  
+  f1 <- arima(b1, order=c(3, 0 ,0), method="ML")
+  b1.theta1.sim[i] <- f1$coef[[1]]
+  b1.theta2.sim[i] <- f1$coef[[2]]
+  b1.mu.sim[i] <- mean(b1)
+  b1.sigmae2.sim[i] <- var(e)
+  
+}
+
+hist(b1.theta1.sim, main="Bootstrap Method 1, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b1.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b1.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b1.theta2.sim, main="Bootstrap Method 1, Theta 2", breaks=100)
+theta2.ci.lower <- quantile(b1.theta2.sim, c(0.025,0.975))[[1]]
+theta2.ci.upper <- quantile(b1.theta2.sim, c(0.025,0.975))[[2]]
+abline(v=theta2.ci.lower, col="red")
+abline(v=theta2.ci.upper, col="red")
+
+hist(b1.mu.sim, main="Bootstrap Method 1, Mu", breaks=100)
+mu.ci.lower <- quantile(b1.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b1.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b1.sigmae2.sim, main="Bootstrap Method 1, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b1.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b1.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+### Bootstrap Method 2
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b2.theta1.sim <- rep(NA, 1000)
+b2.theta2.sim <- rep(NA, 1000)
+b2.mu.sim <- rep(NA, 1000)
+b2.sigmae2.sim <- rep(NA, 1000)
+
+
+b2 <- y
+f <- arima(b2, order=c(0, 0, 2))
+theta <- f$coef
+
+for (j in 1:1000) {
+ 
+  b2 <- y[1:3]
+  for (i in 4:length(y)){
+    b2[i] = sum(theta[1:2] * (b2[(i - 1):(i - 2)] - theta[3])) + theta[3] + sample(f$residuals, 1)
+  }
+ 
+  e <- rep(NA, length(y) - 2)
+  for (i in 3:length(y)) {
+    e[i - 2] <- rnorm(1)
+    b2[i] <- sum(theta[1:2] * (b2[(i - 1):(i - 2)] - theta[3])) + theta[3] + e[i - 2]
+  }
+  
+  f1 <- arima(b2, order=c(0, 0, 2), method="ML")
+  b2.theta1.sim[j] <- f1$coef[[1]]
+  b2.theta2.sim[j] <- f1$coef[[2]]
+  b2.mu.sim[j] <- mean(b2)
+  b2.sigmae2.sim[j] <- var(e)
+  
+}
+
+
+hist(b2.theta1.sim, main="Bootstrap Method 2, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b2.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b2.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b2.theta2.sim, main="Bootstrap Method 2, Theta 2", breaks=100)
+theta2.ci.lower <- quantile(b2.theta2.sim, c(0.025,0.975))[[1]]
+theta2.ci.upper <- quantile(b2.theta2.sim, c(0.025,0.975))[[2]]
+abline(v=theta2.ci.lower, col="red")
+abline(v=theta2.ci.upper, col="red")
+
+hist(b2.mu.sim, main="Bootstrap Method 2, Mu", breaks=100)
+mu.ci.lower <- quantile(b2.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b2.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b2.sigmae2.sim, main="Bootstrap Method 2, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b2.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b2.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+
+
+### Bootstrap Method 3
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b3.theta1.sim <- rep(NA, 1000)
+b3.theta2.sim <- rep(NA, 1000)
+b3.mu.sim <- rep(NA, 1000)
+b3.sigmae2.sim <- rep(NA, 1000)
+
+
+b3 <- y
+f <- arima(b3, order=c(0, 0, 2))
+theta <- f$coef
+
+for (j in 1:1000) {
+
+  b3 <- y[1:2]
+  for (i in 3:length(y)){
+    b3 <- arima.sim(n=100, model=list(ma=theta[1:2]), sd=sqrt(f$sigma2)) + theta[3]
+    b3 <- b3[-(1:(100-31))]
+  }
+  
+  f1 <- arima(b3, order=c(0, 0, 2), method="ML")
+  b3.theta1.sim[j] <- f1$coef[[1]]
+  b3.theta2.sim[j] <- f1$coef[[2]]
+  b3.mu.sim[j] <- mean(b3)
+  b3.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b3.theta1.sim, main="Bootstrap Method 3, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b3.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b3.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b3.theta2.sim, main="Bootstrap Method 3, Theta 2", breaks=100)
+theta2.ci.lower <- quantile(b3.theta2.sim, c(0.025,0.975))[[1]]
+theta2.ci.upper <- quantile(b3.theta2.sim, c(0.025,0.975))[[2]]
+abline(v=theta2.ci.lower, col="red")
+abline(v=theta2.ci.upper, col="red")
+
+hist(b3.mu.sim, main="Bootstrap Method 3, Mu", breaks=100)
+mu.ci.lower <- quantile(b3.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b3.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b3.sigmae2.sim, main="Bootstrap Method 3, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b3.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b3.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \theta_1 &: (`r theta1.ci.lower`, `r theta1.ci.upper`) \\
+  \theta_2 &: (`r theta2.ci.lower`, `r theta2.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+\pagebreak
+
+
+### Bootstrap Method 4
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+
+b4.theta1.sim <- rep(NA, 1000)
+b4.theta2.sim <- rep(NA, 1000)
+b4.mu.sim <- rep(NA, 1000)
+b4.sigmae2.sim <- rep(NA, 1000)
+
+
+b4 <- y
+f <- arima(b4, order=c(0, 0, 2))
+theta <- f$coef
+
+for (j in 1:1000) {
+ 
+  b4 <- y[1:3]
+  for (i in 4:length(y)){
+    b4 <- arima.sim(n=100, model=list(ma=theta[1:2]), rand.gen=function(n, r=f$residuals){ sample(r, n, replace=TRUE) }) + theta[3]
+    b4 <- b4[-(1:(100 - 31))]
+  }
+  
+  f1 <- arima(b4, order=c(0, 0, 2), method="ML")
+  b4.theta1.sim[j] <- f1$coef[[1]]
+  b4.theta2.sim[j] <- f1$coef[[2]]
+  b4.mu.sim[j] <- mean(b4)
+  b4.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b4.theta1.sim, main="Bootstrap Method 4, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b4.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b4.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b4.theta2.sim, main="Bootstrap Method 4, Theta 2", breaks=100)
+theta2.ci.lower <- quantile(b4.theta2.sim, c(0.025,0.975))[[1]]
+theta2.ci.upper <- quantile(b4.theta2.sim, c(0.025,0.975))[[2]]
+abline(v=theta2.ci.lower, col="red")
+abline(v=theta2.ci.upper, col="red")
+
+hist(b4.mu.sim, main="Bootstrap Method 4, Mu", breaks=100)
+mu.ci.lower <- quantile(b4.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b4.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(b4.sigmae2.sim, main="Bootstrap Method 4, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b4.sigmae2.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b4.sigmae2.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+```
+
+
+## (c) Use the diagnostics discussed in Chapter 8 to analyze the suitability of the AR(2) and MA(2) models.
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+r.ar2 <- residuals(fit.ar2)
+plot(r.ar2)
+acf(r.ar2)
+qqn <- qqnorm(r.ar2)
+qqline(r.ar2)
+r.squared.r.ar2 <- cor(qqn$x, qqn$y)
+r.squared.r.ar2
+shapiro.test(r.ar2)
+```
+
+```{r, fig.align='center', fig.height=4, fig.width=5}
+r.ma2 <- residuals(fit.ma2)
+plot(r.ma2)
+acf(r.ma2)
+qqn <- qqnorm(r.ma2)
+qqline(r.ma2)
+r.squared.r.ma2 <- cor(qqn$x, qqn$y)
+r.squared.r.ma2
+shapiro.test(r.ma2)
+```
+
+Both of the residual plots look good with very little autocorrelation and Shapiro-Wilk test p-values << 0.05, so they are normally distributed. We would choose the AR(2) based off of the AIC.
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak

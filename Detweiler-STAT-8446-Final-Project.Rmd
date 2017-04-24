@@ -1,0 +1,377 @@
+---
+title: "Final Project"
+author: "Brian Detweiler"
+date: "April 24, 2017"
+abstract: "The city of Chicago publishes a data set on the number of speeding violations captured by cameras posted throughout the city dating back to June 1st, 2014. In this paper, we look for trends over time and attempt to explain the variance in the violations and to forcast future violations for the remainder of 2017."
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+library(knitr)
+library(lubridate)
+library(dplyr)
+library(TSA)
+library(zoo)
+library(xts)
+library(data.table)
+library(forecast)
+#library(ggfortify)
+library(reshape2)
+library(ggmap)
+library(rMaps)
+library(htmlwidgets)
+library(plotrix)
+library(leaflet)
+library(broom)
+```
+
+# The Data
+
+The data set is fairly simple, consisting of the address, camera ID, violation date, number of violations. There are some additional columns for latitude and longitude, but these appear to be sparse. We will repopulate these using the \textsf{R} package \texttt{ggmap}.
+
+Although it would be ideal to model both the individual cameras and the overall city-level trend, there seems to be too much missing data on many cameras, so the individual models become more guesswork than empiricism. However, if we aggregate to the city-level, missing and existing data are evenly distributed over all the cameras, and we can have a better shot at building an accurate model.
+
+```{r, echo=FALSE}
+set.seed(48548493)
+```
+
+```{r, echo=FALSE}
+### Data Processing - Only need to do this once. Leaving here for reproducibility.
+
+#dat <- read.csv('Speed_Camera_Violations.csv')
+
+# Date formatting
+#dat$VIOLATION.DATE <- mdy(dat$VIOLATION.DATE)
+
+# Get Lat-Lons
+#addresses.df <- data.frame(address=unique(dat$ADDRESS))
+#addresses.df$address <- as.character(addresses.df$address)
+
+# Specify Chicago, so Google Maps knows where to send us
+#addresses.df$address <- paste0(addresses.df$address, ", CHICAGO, IL")
+#latlon <- geocode(addresses.df$address)
+
+# Remove the Chicago part
+#addresses.df$address <- gsub(", CHICAGO, IL", "", addresses.df$address)
+
+# Populate the final data frame with the lat-lon data
+#for (i in 1:length(addresses.df[,1])) {
+  #dat[which(as.character(dat$ADDRESS) == addresses.df$address[i]),]$LATITUDE <- addresses.df$lat[i]
+  #dat[which(as.character(dat$ADDRESS) == addresses.df$address[i]),]$LONGITUDE <- addresses.df$lon[i]
+#} 
+
+#saveRDS(dat, file = 'violations.rds')
+
+# Verify we have all the right points
+dat <- readRDS('violations.rds')
+
+digits.format <- function(x, sci.digits = 2) { 
+  return(format(x, big.mark=",", digits = 2, nsmall = sci.digits))
+}
+
+qqplot.norm <- function (vec, title)
+{
+  # following four lines from base R's qqline()
+  y <- quantile(vec[!is.na(vec)], c(0.25, 0.75))
+  x <- qnorm(c(0.25, 0.75))
+  slope <- diff(y)/diff(x)
+  int <- y[1L] - slope * x[1L]
+
+  d <- data.frame(resids = vec)
+
+  ggplot(d, aes(sample = resids)) + 
+    stat_qq() + 
+    geom_abline(slope = slope, intercept = int) +
+    labs(title = title)
+
+}
+
+undiff <- function(time.series, first.value) {
+  return(c(first.value, first.value + cumsum(time.series)))
+}
+```
+
+We can display all violations by traffic camera by representing the different cameras as different colors. There are `r length(unique(dat$CAMERA.ID))` cameras in the dataset, so the plot does become quite messy. 
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+kable(dat[1:5, 1:4], caption="Sample of the data")
+ggplot(dat, aes(y=VIOLATIONS, x=VIOLATION.DATE, colour=CAMERA.ID)) +
+  geom_line() +
+  theme(legend.position="none") +
+  labs(title="Violations by Traffic Cam", x="Violation Date", y="Number of Violations")
+```
+
+# Locations of Cameras
+
+The cameras are scattered througout the city. An interactive version can be found at http://bdetweiler.github.io/projects/chicago-traffic-cameras.html.
+
+```{r, fig.height=3, fig.width=4, fig.align='center', echo=FALSE, warning=FALSE, message=FALSE}
+
+dat.grouped <- dat %>% dplyr::group_by(CAMERA.ID, ADDRESS, LATITUDE, LONGITUDE) %>%
+  dplyr::summarise(TOT=sum(VIOLATIONS))
+
+dat.grouped <- as.data.frame(dat.grouped)
+# Scale the data so we can plot it
+dat.grouped$TOT.SCALED <- rescale(dat.grouped$TOT, range(5, 25))
+
+chi <- get_map('Chicago, IL', zoom = 10)
+ggmap(chi) +
+  geom_point(aes(x = dat.grouped$LONGITUDE, y = dat.grouped$LATITUDE, colour = dat.grouped$TOT), data = dat.grouped, alpha = .5) +
+  labs(x = "", y = "", title = "Traffic Camera Locations in Chicago", colour = "Total Violations")
+
+
+# map <- leaflet(data = dat.grouped) %>% setView(lat = 41.8382522, lng = -87.9086302, zoom = 9)
+# map <- map %>% addProviderTiles(providers$Esri.NatGeoWorldMap) %>% 
+   # addCircleMarkers(
+    # radius = ~TOT.SCALED,
+    # stroke = FALSE, 
+    # fillOpacity = 0.5,
+    # label = ~as.character(CAMERA.ID),
+    # popup = ~paste0(ADDRESS, " - ", digits.format(TOT), ' total violations')
+  # )
+# map
+
+## Save to webpage
+# saveWidget(map, file="m.html")
+```
+
+# City-Level Analysis
+
+By aggregating the individual camera violations by date, we can get an overview of all the violations in the city as a time series. 
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE}
+dat.grouped <- dat %>% dplyr::group_by(VIOLATION.DATE) %>%
+  dplyr::summarise(sum(VIOLATIONS))
+
+dat.grouped <- as.data.frame(dat.grouped)
+colnames(dat.grouped) <- c('VIOLATION.DATE', 'VIOLATIONS')
+
+violations.mean <- mean(dat.grouped$VIOLATIONS)
+two.sd <- 2 * sd(dat.grouped$VIOLATIONS)
+
+ggplot(dat.grouped, aes(y=VIOLATIONS, x=VIOLATION.DATE)) +
+  geom_line() +
+  geom_hline(yintercept = violations.mean, col="blue") +
+  geom_hline(yintercept = violations.mean + two.sd, col="red", linetype="dashed") +
+  geom_hline(yintercept = violations.mean - two.sd, col="red", linetype="dashed") +
+  theme(legend.position="none") +
+  labs(title="All Traffic Violations in Chicago", x="Violation Date", y="Number of Violations")
+```
+
+The blue line represents the mean, and red dashed lines represent $\pm 2 s$.
+
+The mean and variance don't appear to be constant over time. The first difference is given by $W_t = \nabla Y_{t} = Y_{t} - Y_{t - 1}$.
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE}
+violations.zoo <- zoo(dat.grouped$VIOLATIONS, order.by = dat.grouped$VIOLATION.DATE)
+
+violations.diff <- diff(violations.zoo)
+
+violations.diff.var <- var(violations.diff)
+violations.diff.mean <- mean(violations.diff)
+
+autoplot(violations.diff) +
+  geom_abline(slope=0, intercept = violations.diff.mean, col="blue") +
+  labs(title="First Difference", y="", x="Date")
+
+```
+
+The first difference gives us a constant, zero-mean over time. The variance is still very large. 
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+dickey.fuller <- tidy(adf.test(violations.diff))
+dickey.fuller.p.val <- dickey.fuller$p.value
+```
+
+This looks much more stationary, and an augmented Dickey-Fuller test reinforces this assumption with a p-value less than $`r dickey.fuller.p.val`$.
+
+We will investigate different models and evaluate their residuals, AIC, and BICs to determine the best fit. The first thing we check with any time series is check the ACF, PACF, and EACF.
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE}
+acf(violations.diff, lag.max = 60)
+pacf(violations.diff, lag.max = 60)
+eacf(violations.diff)
+```
+
+The EACF doesn't appear to show any triangle pattern. The ACF and shows a potential seasonal pattern, and the PACF appears to cut off, so we will look to fit an ARMA(p, q) model to the first difference.
+
+We can check the ARMA subsets as well.
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+subs <- armasubsets(violations.diff, nar = 13, nma = 13)
+plot(subs)
+```
+
+The best model for this, according to the ARMA subsets is an ARIMA(7, 1, 10) given by the equation
+
+$$
+\begin{split}
+  W_t &= \nabla Y_t = Y_t - Y_{t - 1} \\
+  W_t &= \phi_1 W_{t - 1} + \phi_7 W_{t - 7} + e_t - \theta_{1} e_{1} - \theta_6 e_{t - 6} - \theta_7 e_{t - 7} - \theta_8 e_{t - 8} - \theta_{10} e_{t - 10} \\
+\end{split}
+$$
+
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+ar1 <- NA
+ar2 <- 0
+ar3 <- 0
+ar4 <- 0
+ar5 <- 0
+ar6 <- 0
+ar7 <- NA
+
+ma1 <- NA
+ma2 <- 0
+ma3 <- 0
+ma4 <- 0
+ma5 <- 0
+ma6 <- NA
+ma7 <- NA
+ma8 <- NA
+ma9 <- 0
+ma10 <- NA
+intercept <- NA
+
+fit <- Arima(violations.zoo,
+             order = c(7, 1, 10), 
+             method = "ML", 
+             fixed = c(ar1, ar2, ar3, ar4, ar5, ar6, ar7,
+                       ma1, ma2, ma3, ma4, ma5, ma6, ma7, ma8, ma9, ma10),
+             transform.pars = FALSE)
+            #seasonal=list(order=c(0,0,1))) 
+
+model1.aic <- fit$aic
+
+fitted.ts <- zoo(fitted(fit))
+
+fit.df <- tidy(fit$x) %>% select(index, value)
+fit.df <- cbind(fit.df, fitted.val=coredata(fitted.ts))
+fit.df <- cbind(fit.df, resid=coredata(fit$residuals))
+fit.df <- cbind(fit.df, resid.stand=coredata(rstandard(fit)))
+```
+
+With an AIC of $`r model1.aic`$, this is not an ideal model. However, this is very real world data, so we will likely have to make some consessions regarding our model.
+
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+
+ggplot(fit.df, aes(x = index, y = resid.stand)) +
+  geom_line() +
+  labs(title="Residiuals of ARIMA(7, 1, 10)")
+
+acf(fit.df$resid.stand)
+
+ggplot(fit.df, aes(x = resid.stand)) +
+  geom_histogram(bins=100) +
+  labs(title="Distribution of Residuals of ARIMA(7, 1, 10")
+
+qqplot.norm(fit.df$resid.stand, "Residuals of ARIMA(7, 1, 10)")
+
+shapiro <- tidy(shapiro.test(fit.df$resid.stand))
+shapiro.p.value <- shapiro$p.value
+
+ljung.box.p.value <- tidy(Box.test(fit.df$resid.stand, type="Ljung-Box"))$p.value
+```
+
+Here we can see the residuals do somewhat resemble white noise, with a few areas of heteroskedascity. The residuals appear to be normally distributed, with a Shapiro-Wilk test returning a p-value of $`r shapiro.p.value`$. 
+
+And a Ljung-Box test of the residuals results in a p-value of $`r ljung.box.p.value`$, thus we do not reject the null hypothesis that the residuals are independent.
+
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+pred <- predict(fit, n.ahead=295)
+pred.ts <- pred$pred
+
+remainder.of.year <- seq(as.Date('2017-03-12'), as.Date('2017-12-31'), by="day")
+pred.df <- data.frame(index=remainder.of.year)
+pred.df$value <- coredata(pred.ts)
+pred.df$se.upper <- coredata(pred$se) + coredata(pred.ts)
+pred.df$se.lower <- -coredata(pred$se) + coredata(pred.ts)
+
+
+ggplot(fit.df, aes(x = index, y = value)) + 
+  geom_line(colour='red') +
+  geom_line(aes(x = index, y = fitted.val), colour='blue') +
+    geom_smooth(data = pred.df, 
+                aes(x=index, y=value, ymax=se.upper, ymin=se.lower), 
+                colour='red', 
+                stat='identity')
+```
+
+
+# Auto-ARIMA
+
+Another way to fit this time series is to use the \texttt{forecast::auto.arima()} function. 
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+fit <- auto.arima(violations.zoo, seasonal = TRUE)
+
+model1.aic <- fit$aic
+
+fitted.ts <- zoo(fitted(fit))
+
+fit.df <- data.frame(fitted.val=tidy(fit$fitted)$x)
+
+fit.df <- cbind(fit.df, value=coredata(violations.zoo))
+fit.df <- cbind(fit.df, index=index(violations.zoo))
+fit.df <- cbind(fit.df, resid=coredata(fit$residuals))
+fit.df <- cbind(fit.df, resid.stand=coredata(rstandard(fit)))
+
+ggplot(fit.df) +
+  geom_line(aes(x = index(index), y = value), col="red") +
+  geom_line(aes(x = index(index), y = fitted.val), col="blue") +
+  labs(title="ARIMA(1, 1, 3)")
+```
+
+\texttt{forecast::auto.arima()} prouduces an ARIMA(1, 1, 3) with an AIC of $`r model1.aic`$. This is worse than our previous model.
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+ggplot(fit.df, aes(x = index, y = resid.stand)) +
+  geom_line() +
+  labs(title="Residiuals of ARIMA(7, 1, 10)")
+
+acf(fit.df$resid.stand)
+
+ggplot(fit.df, aes(x = resid.stand)) +
+  geom_histogram(bins=100) +
+  labs(title="Distribution of Residuals of ARIMA(7, 1, 10")
+
+qqplot.norm(fit.df$resid.stand, "Residuals of ARIMA(7, 1, 10)")
+
+shapiro <- tidy(shapiro.test(fit.df$resid.stand))
+shapiro.p.value <- shapiro$p.value
+ljung.box.p.value <- tidy(Box.test(fit.df$resid.stand, type="Ljung-Box"))$p.value
+```
+
+The residuals still resemble white noise, with a few areas of heteroskedascity. The residuals appear to be normally distributed, with a Shapiro-Wilk test returning a p-value of $`r shapiro.p.value`$. There seems to be some seasonal autocorrelation in the residuals, however, which makes this very problematic.
+
+And a Ljung-Box test of the residuals results in a p-value of $`r ljung.box.p.value`$, thus we do not reject the null hypothesis that the residuals are independent.
+
+
+```{r, fig.height=4, fig.width=5, fig.align='center', echo=FALSE, warning=FALSE}
+pred <- predict(fit, n.ahead=295)
+pred.ts <- pred$pred
+
+remainder.of.year <- seq(as.Date('2017-03-12'), as.Date('2017-12-31'), by="day")
+pred.df <- data.frame(index=remainder.of.year)
+pred.df$value <- coredata(pred.ts)
+
+pred.df$se.upper <- coredata(pred$se) + coredata(pred.ts)
+pred.df$se.lower <- -coredata(pred$se) + coredata(pred.ts)
+
+
+ggplot(fit.df, aes(x = index, y = value)) + 
+  geom_line(colour='red') +
+  geom_line(aes(x = index, y = fitted.val), colour='blue') +
+    geom_smooth(data = pred.df, 
+                aes(x=index, y=value, ymax=se.upper, ymin=se.lower), 
+                colour='red', 
+                stat='identity')
+```
+
+# Conclusion
+
+The ARIMA(7, 1, 10) has a better AIC than the ARIMA(1, 1, 3), and the residuals in the second model seem to be strongly autocorrelated, so we would choose the first model over the second. However, the prediction limits for Model 1 seem a bit narrow, and we may feel more comfortable choosing Model 2 for the more reasonable prediction limits, or possibly tweaking the forecast of the first model to obtain something more reasonable.

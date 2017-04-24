@@ -8,6 +8,7 @@ output: pdf_document
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(TSA)
+library(forecast)
 ```
 
 # 1. Consider three seperate AR(1) models: $\phi = 0.1, \phi = 0.5$, and $\phi = 0.8$.
@@ -210,85 +211,265 @@ set.seed(0)
 
 phi1 <- 0.1
 
-r1 <- c()
-r7 <- c()
-for (i in 1:1000) {
+model1.r1 <- c()
+model1.r7 <- c()
+for (i in 1:999) {
   sim <- arima.sim(n = 60, model = list(ar=(phi1)))
   r <- acf(sim, plot = FALSE)
-  r1 <- c(r1, r[[1]][1])
-  r7 <- c(r7, r[[1]][7])
+  model1.r1 <- c(model1.r1, r[[1]][1])
+  model1.r7 <- c(model1.r7, r[[1]][7])
 }
 
-sd(r1)
-sd(r7)
+r <- acf(sim)
+model1.r1 <- c(model1.r1, r[[1]][1])
+model1.r7 <- c(model1.r7, r[[1]][7])
 ```
 
 ```{r}
 phi1 <- 0.5
 
-r1 <- c()
-r7 <- c()
-for (i in 1:1000) {
+model2.r1 <- c()
+model2.r7 <- c()
+for (i in 1:999) {
   sim <- arima.sim(n = 60, model = list(ar=(phi1)))
   r <- acf(sim, plot = FALSE)
-  r1 <- c(r1, r[[1]][1])
-  r7 <- c(r7, r[[1]][7])
+  model2.r1 <- c(model2.r1, r[[1]][1])
+  model2.r7 <- c(model2.r7, r[[1]][7])
 }
 
-sd(r1)
-sd(r7)
+r <- acf(sim)
+model2.r1 <- c(model2.r1, r[[1]][1])
+model2.r7 <- c(model2.r7, r[[1]][7])
 ```
 
 ```{r}
 phi1 <- 0.8
 
-r1 <- c()
-r7 <- c()
-for (i in 1:1000) {
+model3.r1 <- c()
+model3.r7 <- c()
+for (i in 1:999) {
   sim <- arima.sim(n = 60, model = list(ar=(phi1)))
   r <- acf(sim, plot = FALSE)
-  r1 <- c(r1, r[[1]][1])
-  r7 <- c(r7, r[[1]][7])
+  model3.r1 <- c(model3.r1, r[[1]][1])
+  model3.r7 <- c(model3.r7, r[[1]][7])
 }
 
-sd(r1)
-sd(r7)
+r <- acf(sim)
+model3.r1 <- c(model3.r1, r[[1]][1])
+model3.r7 <- c(model3.r7, r[[1]][7])
 ```
 
 ## (d) Based on your results in parts (a) and (b), are $r_1$ and $r_7$ from part (c) within 2 standard deviations of $\rho_1$ and $\rho_7$ respectively?
 
+### $\phi = 0.1$
+For an AR(1), we know that $c_{ii} = \frac{1}{n} \bigg[ \frac{(1 + \phi^2)(1 - \phi^{2i})}{1 - \phi^2} - 2i \phi^{2i} \bigg]$. Given the standard error of $r_k = \sqrt{\frac{c_{ii}}{n}}$. We've calculated these previously in part **(b)**, so we just need values for $n$.
+
+We can investigate increasing values of $n$ to to get an idea of how the variance behaves with more data. We'll use $n = 1, 100, 1000$.
+
+## Model 1, $\phi_1 = 0.1$
+
+```{r, include=FALSE}
+phi <- 0.1
+n <- 1
+```
+
+$$
+\begin{split}
+  n &= 1\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 100
+```
+
+$$
+\begin{split}
+  n &= 100\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 1000
+```
+
+$$
+\begin{split}
+  n &= 1000\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+## Model 2, $\phi_1 = 0.5$
+
+```{r, include=FALSE}
+phi <- 0.5
+n <- 1
+```
+
+$$
+\begin{split}
+  n &= 1\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 100
+```
+
+$$
+\begin{split}
+  n &= 100\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 1000
+```
+
+$$
+\begin{split}
+  n &= 1000\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+## Model 3, $\phi_1 = 0.8$
+```{r, include=FALSE}
+phi <- 0.8
+n <- 1
+```
+
+$$
+\begin{split}
+  n &= 1\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 100
+```
+
+$$
+\begin{split}
+  n &= 100\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+```{r, include=FALSE}
+n <- 1000
+```
+
+$$
+\begin{split}
+  n &= 1000\\
+  SE(r_1) &\approx `r sqrt(partial.var.rk(phi, 1) / n)` \\
+  SE(r_7) &\approx `r sqrt(partial.var.rk(phi, 7) / n)` \\
+\end{split}
+$$
+
+In all cases, the standard error falls within 2 standard deviations.
+
 ## (e) Repeat part (c) for 1000 times. Draw histograms for $r_1$'s and $r_7$'s for each model. What proportion of $r_1$'s and $r_7$'s are within 2 standard deviations of $\rho_1$ and $\rho_7$?
 
-```{r}
+## Model 1, $\phi_1 = 0.1$
 
+```{r, fig.height=4, fig.width=5, fig.align='center'}
 phi1 <- 0.1
+lower <- phi1 - (2 * sd(model1.r1))
+upper <- phi1 + (2 * sd(model1.r1))
 
-sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
-
-r <- acf(sim)
-r[1]
-r[7]
+within.sd <- (1 - sum((model1.r1 < lower) + (model1.r1 > upper)) / length(model1.r1)) * 100
+hist(model1.r1, breaks=100, freq=F, xlim=c(min(lower, model1.r1), max(upper, model1.r1)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
 ```
 
-```{r}
+For $r_1$ in model 1, `r within.sd`% fall within 2SE.
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+phi1 <- (0.1)^7
+lower <- phi1 - (2 * sd(model1.r7))
+upper <- phi1 + (2 * sd(model1.r7))
+
+within.sd <- (1 - sum((model1.r7 < lower) + (model1.r7 > upper)) / length(model1.r7)) * 100
+hist(model1.r7, breaks=100, freq=F, xlim=c(min(lower, model1.r7), max(upper, model1.r7)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
+```
+
+For $r_7$ in model 1, `r within.sd`% fall within 2SE.
+
+## Model 2, $\phi_1 = 0.5$
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
 phi1 <- 0.5
+lower <- phi1 - (2 * sd(model2.r1))
+upper <- phi1 + (2 * sd(model2.r1))
 
-sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
-
-r <- acf(sim)
-r[1]
-r[7]
+within.sd <- (1 - sum((model2.r1 < lower) + (model2.r1 > upper)) / length(model2.r1)) * 100
+hist(model2.r1, breaks=100, freq=F, xlim=c(min(lower, model2.r1), max(upper, model2.r1)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
 ```
 
-```{r}
+For $r_1$ in model 2, `r within.sd`% fall within 2SE.
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+phi1 <- (0.5)^7
+lower <- phi1 - (2 * sd(model2.r7))
+upper <- phi1 + (2 * sd(model2.r7))
+
+within.sd <- (1 - sum((model2.r7 < lower) + (model2.r7 > upper)) / length(model2.r7)) * 100
+hist(model2.r7, breaks=100, freq=F, xlim=c(min(lower, model2.r7), max(upper, model2.r7)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
+```
+
+For $r_7$ in model 2, `r within.sd`% fall within 2SE.
+
+
+## Model 3, $\phi_1 = 0.8$
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
 phi1 <- 0.8
+lower <- phi1 - (2 * sd(model3.r1))
+upper <- phi1 + (2 * sd(model3.r1))
 
-sim <- arima.sim(n = 1000, model = list(ar=(phi1)))
-
-r <- acf(sim)
-r[1]
-r[7]
+within.sd <- (1 - sum((model3.r1 < lower) + (model3.r1 > upper)) / length(model3.r1)) * 100
+hist(model3.r1, breaks=100, freq=F, xlim=c(min(lower, model3.r1), max(upper, model3.r1)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
 ```
+
+For $r_1$ in model 3, `r within.sd`% fall within 2SE.
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+phi1 <- (0.8)^7
+lower <- phi1 - (2 * sd(model3.r7))
+upper <- phi1 + (2 * sd(model3.r7))
+
+within.sd <- (1 - sum((model3.r7 < lower) + (model3.r7 > upper)) / length(model3.r7)) * 100
+hist(model3.r7, breaks=100, freq=F, xlim=c(min(lower, model3.r7), max(upper, model3.r7)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
+```
+
+For $r_7$ in model 3, `r within.sd`% fall within 2SE.
 
 \begin{flushright}
   $\blacksquare$
@@ -304,29 +485,88 @@ r[7]
 ```{r}
 phi1 <- 0.6
 
-sim.1 <- arima.sim(n = 15, model = list(ar=(phi1)))
-sim.2 <- arima.sim(n = 75, model = list(ar=(phi1)))
-sim.3 <- arima.sim(n = 100, model = list(ar=(phi1)))
+sim1 <- arima.sim(n = 15, model = list(ar=(phi1)))
+sim2 <- arima.sim(n = 75, model = list(ar=(phi1)))
+sim3 <- arima.sim(n = 100, model = list(ar=(phi1)))
 
-r.1 <- acf(sim.1)
-r.2 <- acf(sim.2)
-r.3 <- acf(sim.3)
+sim1.r <- acf(sim1)
+sim1.r1 <- sim1.r[[1]][1]
+sim2.r <- acf(sim2)
+sim2.r1 <- sim2.r[[1]][1]
+sim3.r <- acf(sim3)
+sim3.r1 <- sim3.r[[1]][1]
 ```
 
 ## (b) For each set of simulated data, calculate $r_1$.
 
+### $n = 15$
 ```{r}
-r.1[1]
-r.1[7]
-r.2[1]
-r.2[7]
-r.3[1]
-r.3[7]
+sim1.r1
 ```
 
+### $n = 75$
+```{r}
+sim2.r1
+```
+
+## $n = 100$
+```{r}
+sim3.r1
+```
 ## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
 
+Using the function we defined earlier, \texttt{partial.var.rk}, we just need to substitute in our values for $n$.
+
+### $n = 15$
+
+$$
+\begin{split}
+  Var(r_1) &= `r partial.var.rk(0.6, 1) / 15` \\
+\end{split}
+$$
+
+## $n = 75$
+
+$$
+\begin{split}
+  Var(r_1) &= `r partial.var.rk(0.6, 1) / 75` \\
+\end{split}
+$$
+
+### $n = 100$
+
+$$
+\begin{split}
+  Var(r_1) &= `r partial.var.rk(0.6, 1) / 100` \\
+\end{split}
+$$
+
 ## (d) Repeat part (a) for 1000 times. For each $n$, draw a histogram of the 1000 $r_1$'s, and find what proportion of $r_1$'s are within 2 standard deviations of $\rho_1$.
+
+```{r}
+phi1 <- 0.6
+
+model4.r1 <- c()
+for (i in 1:999) {
+  sim <- arima.sim(n = 60, model = list(ar=(phi1)))
+  r <- acf(sim, plot = FALSE)
+  model4.r1 <- c(model4.r1, r[[1]][1])
+}
+
+r <- acf(sim)
+model4.r1 <- c(model4.r1, r[[1]][1])
+
+lower <- 0.6 - (2 * sd(model4.r1))
+upper <- 0.6 + (2 * sd(model4.r1))
+
+within.sd <- (1 - sum((model4.r1 < lower) + (model4.r1 > upper)) / length(model4.r1)) * 100
+
+hist(model4.r1, breaks=100, freq=F, xlim=c(min(lower, model4.r1), max(upper, model4.r1)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
+```
+
+`r within.sd`% of the observations fall within 2SE.
 
 \begin{flushright}
   $\blacksquare$
@@ -341,19 +581,111 @@ r.3[7]
 ```{r}
 theta1 <- -0.6
 
-sim.1 <- arima.sim(n = 15, model = list(ma=(theta1)))
-sim.2 <- arima.sim(n = 75, model = list(ma=(theta1)))
-sim.3 <- arima.sim(n = 100, model = list(ma=(theta1)))
+sim1 <- arima.sim(n = 15, model = list(ma=(theta1)))
+sim2 <- arima.sim(n = 75, model = list(ma=(theta1)))
+sim3 <- arima.sim(n = 100, model = list(ma=(theta1)))
 
-r.1 <- acf(sim.1)
-r.2 <- acf(sim.2)
-r.3 <- acf(sim.3)
+sim1.r <- acf(sim1)
+sim2.r <- acf(sim2)
+sim3.r <- acf(sim3)
 ```
+
 ## (b) For each set of simulated data, calculate $r_1$.
+
+### $n = 15$
+
+```{r}
+sim1.r[[1]][1]
+```
+
+### $n = 75$
+
+```{r}
+sim2.r[[1]][1]
+```
+
+### $n = 100$
+
+```{r}
+sim3.r[[1]][1]
+```
 
 ## (c) For each $n$, what is $Var(r_1)$? Is $r_1$ within 2 standard deviations of $\rho_1$ for each sample?
 
+For an MA(1) model, $c_{11} = 1 - 3 \rho_1^2 + 4 \rho_1^4$. 
+
+Thus, $Var(r_1) = \frac{c_{11}}{n}$.
+
+```{r}
+rho1 <- -0.6 / (1 + (0.6)^2)
+```
+
+For an MA(1) model, $\rho_1 = \frac{- \theta}{1 + \theta^2}$. In this case, $\rho_1 = \frac{-0.6}{1 + (0.6)^2} = `r rho1`$.
+
+$$
+\begin{split}
+  Var(r_1) &= \frac{c_{11}}{n} = \frac{1 - 3 \rho_1^2 + 4 \rho_1^4}{n} \\
+  &= \frac{1 - 3 (`r rho1`)^2 + 4 `r rho1`^4}{n} \\
+  &= \frac{`r 1 - 3 * rho1^2 + 4 * rho1^4`}{n} \\
+\end{split}
+$$
+
+### $n = 15$
+
+$$
+\begin{split}
+  Var(r_1) &= \frac{`r 1 - 3 * rho1^2 + 4 * rho1^4`}{15} \\
+  &= `r (1 - 3 * rho1^2 + 4 * rho1^4) / 15` \\
+\end{split}
+$$
+
+### $n = 75$
+
+$$
+\begin{split}
+  Var(r_1) &= \frac{`r 1 - 3 * rho1^2 + 4 * rho1^4`}{75} \\
+  &= `r (1 - 3 * rho1^2 + 4 * rho1^4) / 75` \\
+\end{split}
+$$
+
+### $n = 100$
+
+$$
+\begin{split}
+  Var(r_1) &= \frac{`r 1 - 3 * rho1^2 + 4 * rho1^4`}{100} \\
+  &= `r (1 - 3 * rho1^2 + 4 * rho1^4) / 100` \\
+\end{split}
+$$
+
 ## (d) Repeat part (a) for 1000 times. For each $n$, draw a histogram of the 1000 $r_1$'s, and find what proportion of $r_1$'s are within 2 standard deviations of $\rho_1$.
+
+```{r}
+theta1 <- -0.6
+
+rho1 <- -0.6 / (1 + (0.6)^2)
+
+model5.r1 <- c()
+for (i in 1:999) {
+  sim <- arima.sim(n = 60, model = list(ma=(theta1)))
+  r <- acf(sim, plot = FALSE)
+  model5.r1 <- c(model5.r1, r[[1]][1])
+}
+
+r <- acf(sim)
+model5.r1 <- c(model5.r1, r[[1]][1])
+
+lower <- rho1 - (2 * sd(model5.r1))
+upper <- rho1 + (2 * sd(model5.r1))
+
+within.sd <- (1 - sum((model5.r1 < lower) + (model5.r1 > upper)) / length(model5.r1)) * 100
+
+hist(model5.r1, breaks=100, freq=F, xlim=c(min(lower, model5.r1), max(upper, model5.r1)))
+abline(v = lower, col="red")
+abline(v = upper, col="red")
+```
+
+`r within.sd`% of the observations fall within 2SE.
+
 
 \begin{flushright}
   $\blacksquare$
@@ -386,16 +718,56 @@ pacf(days)
 ```
 
 ## (c) Replace the unusual values with a value of 35 days. Redraw the sample ACF and sample PACF plots. Are they different from part (b)?
+
 ```{r}
 days.tmp <- days
 days.tmp[which(days.tmp == 55)] <- 35
 days.tmp[which(days.tmp == 49)] <- 35
 days.tmp[which(days.tmp == 63)] <- 35
 plot(days.tmp)
-acf(days.tmp)
-pacf(days.tmp)
+abline(reg=lm(days.tmp~time(days.tmp)))
 ```
+
+The time series appears to have a slightly decreasing trend, and although the variance appears to be constant, the mean is not, so it is not yet stationary.
+
 ## (d) What ARMA model would you specify for this series after removing the outliers? Explain.
+
+We'll take the first difference to get a stationary time series.
+
+```{r}
+plot(diff(days.tmp))
+acf.val <- acf(diff(days.tmp), lag.max = 60)
+phi1 <- acf.val[[1]][1]
+pacf.val <- pacf(diff(days.tmp), lag.max = 60)
+theta1 <- pacf.val[[1]][1]
+```
+
+The ACF cuts off after 1 lag, so the simplest model we could choose would be an MA(1). This is confirmed using \texttt{auto.arima}.
+
+
+```{r}
+suggested.model <- auto.arima(days.tmp)
+suggested.model
+theta1 <- suggested.model$coef[[1]]
+```
+
+```{r}
+p <- 0
+d <- 1
+q <- 1
+
+sim1 <- arima.sim(n = 130, 
+                  start.innov=(40/ -theta1), 
+                  n.start=1, 
+                  innov=c(0, rnorm(130 - 1)), 
+                  model = list(order=c(p, d, q), 
+                               sd=sd(days.tmp),
+                               ma=c(-theta1)))
+plot(sim1)
+lines(days.tmp, col="red")
+```
+
+This model does not fit very well though. 
 
 \begin{flushright}
   $\blacksquare$
