@@ -1,0 +1,289 @@
+---
+title: "Homework 9"
+author: "Brian Detweiler"
+date: "April 24, 2017"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(TSA)
+library(MASS)
+library(forecast)
+library(ggplot2)
+library(zoo)
+library(scales)
+```
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+set.seed(48548493)
+```
+
+# 1. Consider an AR(1) model with $\phi$ = -0.5 and $\mu$ = 14.  If our last observation occurred at time 50 and the value observed was 12, calculate $\hat{Y}_{50}(1)$, $\hat{Y}_{50}(2)$, and $\hat{Y}_{50}(10)$.
+
+From equation 9.3.6, we get
+$$
+\begin{split}
+  \hat{Y}_{t}(1) &= \mu + \phi(Y_t - \mu) \\
+  &= 14 - 0.5 (12 - 14) \\
+  &= `r 14 - 0.5 * (12 - 14)` \\
+\end{split}
+$$
+
+Once we have $\hat{Y}_{t}(1)$, we can use equation 9.3.7 in conjunction with this and obtain the general values for arbitrary $\hat{Y}_{t}(l)$.
+
+$$
+\begin{split}
+  \hat{Y}_{t}(2) &= \mu + \phi(\hat{Y}_{2 - 1} - \mu) \\
+  &= 14 - 0.5 (15 - 14) \\
+  &= `r 14 - 0.5 * (15 - 14)` \\
+\end{split}
+$$
+
+$$
+\begin{split}
+  \hat{Y}_{t}(10) &= \mu + \phi(\hat{Y}_{10 - 1} - \mu) \\
+  &= 14 - 0.5 (14.0039062 - 14) \\
+  &= `r 14 - 0.5 * (14.0039062 - 14)` \\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. Consider the AR(2) model $Y_t = 5 + 1.1 Y_{t - 1} - 0.5 Y_{t - 2} + e_t$ with $\sigma_e^2 = 2$.
+
+## (a) If the last 3 observed values of the sequence are $Y_{90} = 9$, $Y_{91} = 11$, and $Y_{92} = 10$, find the forecasts $\hat{Y}_{92}(1)$, $\hat{Y}_{92}(2)$, and $\hat{Y}_{92}(3)$.
+
+For an ARMA(2, 0), we can use equation 9.3.28, 
+
+$$
+\begin{split}
+  \hat{Y}_t(l) &= \phi_1 \hat{Y}_t(l - 1) + \phi_2 \hat{Y}_{t}(l - 2) \\
+  \hat{Y}_{92}(1) &= \phi_1 \hat{Y}_{92} + \phi_2 \hat{Y}_{91} \\
+  &= 1.1 (10) - 0.5 (11) \\
+  &= `r 1.1 * (10) - 0.5 * (11)` \\
+  \hat{Y}_{92}(2) &= \phi_1 \hat{Y}_{93} + \phi_2 \hat{Y}_{92} \\
+  &= 1.1 (5.5) - 0.5 (10) \\
+  &= `r 1.1 * (5.5) - 0.5 * (10)` \\
+  \hat{Y}_{92}(3) &= \phi_1 \hat{Y}_{94} + \phi_2 \hat{Y}_{93} \\
+  &= 1.1 (1.05) - 0.5 (5.5) \\
+  &= `r 1.1 * (1.05) - 0.5 * (5.5)` \\
+\end{split}
+$$
+
+## (b) Find the variances of $e_{92}(1)$, $e_{92}(2)$, $e_{92}(3)$. 
+
+$$
+\begin{split}
+ %e_t(1) &= Y_{t + 1} - \hat{Y}_{t}(1) = e_{t + 1}\\
+  Var(e_t(l)) &= \sigma_{e}^2 \sum_{j = 0}^{l - 1} \psi_{j}^2 = l \sigma_e^2 \\
+  Var(e_t(1)) &= 1 (2) = 2 \\
+  Var(e_t(2)) &= 2 (2) = 4 \\
+  Var(e_t(3)) &= 3 (2) = 6 \\
+\end{split}
+$$
+
+
+## (c) Find the 95% prediction limits for the forecasts $\hat{Y}_{92}(1)$, $\hat{Y}_{92}(2)$, and $\hat{Y}_{92}(3)$.
+
+The 95% prediction limits for the forcasts are at $\pm 2 \sqrt{\sigma_e^2}$ for each value of $Var(e_t(l))$.
+
+$$
+\begin{split}
+  \hat{Y}_{92}(1) &: (`r (1.1 * (10) - 0.5 * (11)) - 2`, `r 1.1 * (10) - 0.5 * (11) + 2`) \\
+  \hat{Y}_{92}(2) &: (`r (1.1 * (5.5) - 0.5 * (10)) - 2 * 2`, `r (1.1 * (5.5) - 0.5 * (10)) + 2 * 2`) \\
+  \hat{Y}_{92}(3) &: (`r (1.1 * (1.05) - 0.5 * (5.5)) - 2 * 3`, `r (1.1 * (1.05) - 0.5 * (5.5)) + 2 * 3`)\\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Use \texttt{arima.sim} with $n = 100$ to simulate an ARIMA(0,2,2) with $\theta_1 = 1$ and $\theta_2 = -0.75$ (Use your NUID in \texttt{set.seed}). Store the data as \texttt{y}. Look at the data, notice that there are 102 observations and the first two are both zero. Remove the first two (zero) observations.
+```{r}
+y <- arima.sim(n=100, list(order=c(0, 2, 2), ma = c(1, -0.75)))
+plot(y)
+y <- ts(y[3:102])
+```
+
+## (a) Fit an ARIMA(0,2,2) model to \texttt{y[1:95]}, the first 95 observations of the simulated series, and find the maximum likelihood estimates of $\theta_1$ and $\theta_2$ .
+
+```{r}
+y.95 <- ts(y[1:95])
+fit <- arima(y.95, order=c(0, 2, 2), method = "ML")
+fit
+```
+
+## (b) Construct a time series plot that shows observations 91 through 95, and the forecasts (with prediction limits) for observations 96 through 100.
+
+```{r}
+fore <- forecast(y.95, model = fit, h = 5)
+plot(fore)
+```
+
+## (c) Use \texttt{points(96:100, y[96:100], col="red")} to add the actual observations to the plot. Compare the forecasts with the actual observations.
+
+```{r}
+plot(fore)
+points(96:100, y[96:100], col="red")
+```
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 4. We have previously fitted an AR(3) to the square-root of the \texttt{hare} data.
+
+```{r}
+data(hare)
+```
+
+## (a) Fit the model and plot the time series along with the forecasts (with prediction limits) for the next 12 observations of the square root of hare abundance.
+
+```{r}
+fit <- Arima(y = sqrt(hare), order=c(3, 0, 0))
+fore <- forecast(object=sqrt(hare), model=fit, h=12)
+plot(fore)
+```
+## (b) Use your answer to part (a) to find the numerical values of the forecasts for the hare abundance for the next 12 years.
+
+```{r}
+hares <- (coredata(fore$mean))^2
+upper <- (coredata(fore$upper[,2]))^2
+lower <- (coredata(fore$lower[,2]))^2
+
+for (i in 1:12) {
+  print(paste0("Year: ", (i + 1935), " - ", hares[i], " hares"))
+}
+```
+
+## (c) How do we plot the values you found in (b) along with the corresponding intervals? The plot command has a \texttt{transform} option that allows the data to be transformed. 
+
+```{r}
+square <- function(x) {
+  y <- x^2
+}
+
+sq <- square(fore$fitted)
+
+plot(sq, xlim=c(1905, 1948))
+lines(1936:1947, hares, col="red")
+lines(1936:1947, upper, col="blue")
+lines(1936:1947, lower, col="blue")
+```
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+
+# 5. Consider the multiplicative seasonal ARIMA $(0, 0, 2) \times (0, 1, 0)_{4}$ model.
+
+## (a). Write down the model $Y_t$ = _____________________.
+
+$$
+\begin{split}
+  W_{t} &= \nabla_4 Y_{t} = Y_{t - 4} + e_{t} - \theta_1 e_{t - 1} - \theta_2 e_{t - 2}) \\
+\end{split}
+$$
+
+
+## (b). Find the first four $\psi$-weights for this model.
+
+$$
+\begin{split}
+  Y_{t} &= Y_{t - 4} + e_t - \theta_1 e_{t - 1} - \theta_2 e_{t - 2} \\
+  &= (Y_{t - 8} + e_{t - 4} - \theta_1 e_{t - 5} - \theta_2 e_{t - 6}) + e_{t} - \theta_1 e_{t - 1} - \theta_2 e_{t - 2} \\
+  &= e_t - \theta_1 e_{t - 1} - \theta_2e_{t - 2} + e_{t - 4} - \theta_1 e_{t - 5} - \theta_2 e_{t - 6} + Y_{t - 8} \\
+\end{split}
+$$
+
+Thus the $\psi$-weights here are $\psi_1 = 1$, $\psi_2 = -\theta_1$, $\psi_3 = 0$, and $\psi_4 = 1$.
+
+## (c). Suppose that $\theta_1 = 0.5$, $\theta_2 = -0.25$, and $\sigma_e^2 = 1$, and that the last four observed values were: 25, 20, 25, 40, with corresponding residuals: 2, 1, 2, 3. Predict the next 4 values.
+
+We have
+$$
+\begin{split}
+  \hat{Y}_t(1) &= Y_{t - 3} - \theta_1 e_t - \theta_2 e_{t - 1} \\
+  &= 25 - (0.5)(3) - (-0.25) (2) \\
+  &= 24 \\
+  \hat{Y}_t(2) &= Y_{t - 2} - \theta_2 e_t \\
+  &= 20 - (- 0.25)(3) \\
+  &= 20.75 \\
+  \hat{Y}_t(3) &= Y_{t - 1} = 25 \\
+  \hat{Y}_t(4) &= 40 \\
+\end{split}
+$$
+
+## (d) Construct prediction intervals for the predictions found in (b).
+
+$$
+\begin{split}
+  \hat{Y}_t(1) &: 24 \pm 2 \sqrt{1} \Rightarrow (20, 26) \\
+  \hat{Y}_t(2) &: 20.75 \pm 2 \sqrt{1 + (0.5)^2} \Rightarrow (`r 20.75 - (2 * sqrt(1 + (0.5)^2))`, `r 20.75 + (2 * sqrt(1 + (0.5)^2))`) \\
+  \hat{Y}_t(3) &: 24 \pm 2 \sqrt{1 + (0.5)^2 + (0.25)^2} \Rightarrow  (`r 24 - (2 * sqrt(1 + (0.5)^2 + (0.25)^2))`, `r 24 + (2 * sqrt(1 + (0.5)^2 + (0.25)^2))`) \\
+  \hat{Y}_t(4) &: 40 \pm 2 \sqrt{1 + (0.5)^2 + (0.25)^2 + 0^2} \Rightarrow  (`r 40 - (2 * sqrt(1 + (0.5)^2 + (0.25)^2))`, `r 40 + (2 * sqrt(1 + (0.5)^2 + (0.25)^2))`) \\
+\end{split}
+$$
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 6. The dataset \texttt{JJ} contains the earnings per share for each quarter from 1960 to 1980 for Johnson and Johnson.
+
+```{r}
+data(JJ)
+```
+
+## (a) Plot the time series and also the logarithm of the series. Whether should we use the log transformation to model this series? Explain.
+
+```{r}
+plot(JJ)
+plot(log(JJ))
+```
+
+We'll use the log, because it creates a linear pattern.
+
+## (b) Based on your decision of part (a), find the most appropriate ARIMA $(p, d, q) \times (P, D, Q)_s$ to fit the data or transformed data.
+
+```{r}
+fit <- auto.arima(log(JJ))
+```
+
+We will use an ARIMA $(2, 0, 0) \times (1, 1, 0)_4$.
+
+## (c) Estimate the parameters of the chosen model.
+
+```{r}
+fit
+```
+
+## (d) Use your model to predict the next 4 values of the series.
+
+```{r}
+fore <- forecast(object = JJ, model=fit, h = 4)
+plot(fore)
+fore
+```
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak

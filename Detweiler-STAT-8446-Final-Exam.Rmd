@@ -1,0 +1,934 @@
+---
+title: "Final Exam"
+author: "Brian Detweiler"
+date: "May 4, 2017, 11:59 pm"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, fig.height=4, fig.width=5, fig.align='center', warning = FALSE)
+library(ggplot2)
+library(knitr)
+library(lubridate)
+library(dplyr)
+library(TSA)
+library(zoo)
+library(xts)
+library(data.table)
+library(forecast)
+#library(ggfortify)
+library(reshape2)
+library(ggmap)
+library(rMaps)
+library(htmlwidgets)
+library(plotrix)
+library(leaflet)
+library(broom)
+```
+
+```{r, fig.height=4, fig.width=5, fig.align='center'}
+set.seed(48548493)
+```
+
+# 1. Let $\{X_t\}$ be a sequence of iid random variables with mean 0 and variance $\sigma_X^2$, and $\omega$ a finite constant. Decide whether $Y_t = X_t cos(\omega t) + X_{t - 1} sin(\omega t)$ is stationary or not.
+
+A stochastic process $\{Y_t\}$ is defined as weakly stationary if 
+
+ 1. The mean function is constant over time, and
+ 2. $\gamma_{t, t - k} = \gamma_{0, k}$ 
+
+$$
+\begin{split}
+  E[Y_t] &= E[X_t cos(\omega t) + X_{t - 1} sin(\omega t)] \\
+  &= E[X_t] cos(\omega t) + E[X_{t - 1}] sin(\omega t) \\
+  &= 0 \cdot cos(\omega t) + 0 \cdot sin(\omega t) \\
+  &= 0
+\end{split}
+$$
+
+$$
+\begin{split}
+  \gamma_{t, t - k} &= Cov(Y_t, Y_{t - k}) = Cov\big[(X_t cos(\omega t) + X_{t - 1} sin(\omega t)), (X_{t - k} cos(\omega (t - k)) + X_{t - k - 1} sin(\omega (t - k))\big]\\
+  &= Cov\big(X_t cos(\omega t), X_{t - k} cos(\omega (t - k) \big) \\
+  &+ Cov\big[X_t cos(\omega t), X_{t - k - 1} sin(\omega (t - k) \big]\\
+  &+ Cov\big[X_{t - 1} sin(\omega t), X_{t - k} cos(\omega (t - k) \big] \\
+  &+ Cov\big[X_{t - 1} sin(\omega t), X_{t - k - 1} sin(\omega (t - k) \big]\\
+  %
+  &= cos(\omega t) cos(\omega (t - k) Cov\big(X_t, X_{t - k} \big) \\
+  &+ cos(\omega t) sin(\omega (t - k) Cov\big[X_t, X_{t - k - 1}  \big]\\
+  &+ sin(\omega t) cos(\omega (t - k) Cov\big[X_{t - 1}, X_{t - k} \big] \\
+  &+ sin(\omega t) sin(\omega (t - k) Cov\big[X_{t - 1}, X_{t - k - 1} \big]\\
+\end{split}
+$$
+
+We note the following trig identities:
+
+$$
+\begin{split}
+  cos(x)cos(y) + sin(x)sin(y) &= cos(x - y) \\
+  cos(x)sin(y) + sin(x)cos(y) &= sin(x + y) \\
+\end{split}
+$$
+
+Letting $x = \omega t$ and $y = \omega (t - k)$, we get
+
+$$
+\begin{split}
+  cos(\omega t)cos(\omega (t - k)) + sin(\omega t)sin(\omega (t - k)) &= cos((\omega t) - (\omega (t - k))) \\
+  &= cos((\omega t) - (\omega (t - k))) \\
+  &= cos(\omega k) \\
+  cos(\omega t)sin(\omega (t - k)) + sin(\omega t)cos(\omega (t - k)) &= sin((\omega t) + (\omega (t - k))) \\
+  &= sin((\omega t) + (\omega (t - k))) \\
+  &= sin(\omega (2t - k)) \\
+\end{split}
+$$
+
+Now we have 3 possible cases:
+
+$$
+\begin{split}
+  Cov(Y_t, Y_{t - k}) &=
+  \begin{cases}
+    2 \sigma_X^2 &\text{ for } k = 0 \\
+    sin(\omega (2t - 1)) 2 \sigma_X^2 &\text{ for } k = 1 \\
+    0 &\text{ for } k > 1 \\
+  \end{cases}
+\end{split}
+$$
+
+So we have a constant mean and a constant variance for each time lag $k$, and thus it is stationary.
+
+We can verify this with a simulation, arbitrarily letting $\sigma_X^2 = 1$ and $\omega = 0.5$. We'll look at 100 lags, and perform an augmented Dickey-Fuller test:
+
+```{r}
+omega <- .5
+x <- rnorm(n = 101, mean = 0, sd = 1)
+y <- x[2:101] * cos(omega * 1:100) + x[1:100] * sin(omega * 1:100)
+plot(ts(y))
+adf.test(ts(y), alternative="stationary")
+```
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 2. For each of the following, identify it as an ARIMA model or a multiplicative seasonal ARIMA model. That is, find the values of $p, d, q, P, D, Q$, period $s$, and the values of the parameters ($\phi$'s, $\theta$'s, $\Phi$'s, and '$\Theta$'s).
+
+## (a) $Y_t = 2.8 Y_{t - 1} - 2.6 Y_{t - 2} + 0.8 Y_{t - 3} + e_t - 0.76 e_{t - 1} - 0.2 e_{t - 2}$ 
+
+The AR characteristic polynomial is
+
+$$
+\begin{split}
+  1 - 2.8x + 2.6x^2 - 0.8x^3 &= -0.8(x - 1.25) (x^2 - 2x + 1)\\
+\end{split}
+$$
+
+With a real root of 1.25, it is greater than 1 so we must take the first difference. This yields
+
+$$
+\begin{split}
+  \nabla Y_t &= Y_t - Y_{t - 1} \\
+  \nabla Y_t &= \big[ 2.8 Y_{t - 1} - 2.6 Y_{t - 2} + 0.8 Y_{t - 3} + e_t - 0.76 e_{t - 1} - 0.2 e_{t - 2} \big]  - Y_{t - 1} \\
+  &= 2.8 Y_{t - 1} - Y_{t - 1} - 2.6 Y_{t - 2} + 0.8 Y_{t - 3} + e_t - 0.76 e_{t - 1} - 0.2 e_{t - 2} \\
+  &= 1.8 Y_{t - 1} - 2.6 Y_{t - 2} + 0.8 Y_{t - 3} + e_t - 0.76 e_{t - 1} - 0.2 e_{t - 2} \\
+\end{split}
+$$
+
+Now the AR characteristic polynomial is
+
+$$
+\begin{split}
+  1 - 1.8x + 2.6x^2 - 0.8x^3 &= -0.8(x - 2.56227) (x^2 - 0.687731x + 0.487849)\\
+\end{split}
+$$
+
+Which gives us a real root of 2.56227. This is still not less than 1, but the second difference does not produce a root less than 1 either. 
+
+It is difficult to say, so this may be an ARIMA(3, 1, 2) with parameters $\phi_1 = 1.8, \phi_2 = -2.6, \phi_3 = 0.8, \theta_1 = -0.76$, and $\theta_2 = -0.2$.
+
+## (b) $Y_t = -0.4 Y_{t - 1} + Y_{t - 4} + 0.4 Y_{t - 5} + e_t - 0.6 e_{t - 1} - 0.5 e_{t - 4} + 0.3 e_{t - 5}$
+
+We can rewrite this as
+
+$$
+\begin{split}
+  Y_t - Y_{t - 4} &= 0.4 (Y_{t - 1} - Y_{t - 5}) + e_t - 0.6 e_{t - 1} - 0.5 e_{t - 4} + 0.3 e_{t - 5} \\
+\end{split}
+$$
+
+This is a multiplicative seasonal model, ARIMA$(1, 0, 3)\times(0, 1, 0)_4$ with $\Phi_1 = 0.4$ and $\theta_1 = 0.6, \theta_2 = 0.5$, and $\theta_3 = 0.3$.
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 3. Consider an ARMA(4, 3) model:
+
+$$
+  Y_t = \phi_1 Y_{t - 1} + \phi_2 Y_{t - 2} + \phi_4 Y_{t - 4} + e_t - \theta_1 e_{t - 1} - \theta_3 e_{t - 3} 
+$$
+
+# where $\{e_t\}$ is a sequence of iid random variables with zero mean and unit variance.
+
+## (a) Find expressions for the $\psi$-weights: $\psi_1, \psi_2, \psi_3, \psi_4$, and $\psi_5$, in terms of the $\phi$'s and $\theta$'s. Find a recursive equation for $\psi_k$ for $k > 5$.
+
+We have the following relation for a general linear process,
+
+$$
+\begin{split}
+  \psi_j &= \theta_j + \sum_{k = 1}^p \phi_k \psi_{j - k} \\
+\end{split}
+$$
+
+
+$$
+\begin{split}
+  \psi_0 &= 1 \\
+  \psi_1 &= \theta_1 + \phi_1 \psi_{0} \\
+  \psi_2 &= \phi_1 \psi_{0} + \phi_2 \psi_{1} \\
+  \psi_3 &= \theta_3 + \phi_1 \psi_{0} + \phi_2 \psi_{1} \\
+  \psi_4 &= \phi_1 \psi_{0} + \phi_2 \psi_{1} + \phi_4 \psi_{3} \\
+  \psi_5 &= \phi_1 \psi_{0} + \phi_2 \psi_{1} + \phi_4 \psi_{3} + \phi_5 \psi_{4} \\
+  \psi_j &= \phi_1 \psi_{0} + \phi_2 \psi_{1} + \phi_4 \psi_{3} + \phi_5 \psi_{4} + \hdots + \phi_j \psi_{j - k} \\
+\end{split}
+$$
+
+## (b) Find a system of 5 equations involving $\gamma_0, \gamma_1, \gamma_2, \gamma_3, \gamma_4$ (and perhaps the $\phi$'s $\theta$'s and $\psi$'s). You do not need to solve these equations.
+
+Source: https://stats.stackexchange.com/questions/68644/autocovariance-of-an-arma2-1-process-derivation-of-analytical-model-for-ga
+
+$$
+\begin{split}
+  \gamma_k - \phi_1 \gamma_{k - 1} - \hdots - \phi_p \gamma_{k - p} &= 0 \text{ for } k \geq max(p, q + 1)
+\end{split}
+$$
+
+with initial conditions
+
+$$
+\begin{split}
+  \gamma_k - \sum_{j = 1}^p \phi_{j} \gamma_{k - j} &= \sigma_e^2 \sum_{j = k}^q \theta_{j} \psi_{j - k} \text{ for } 0 \leq k < max(p, q + 1) \\
+\end{split}
+$$
+
+So we have
+
+$$
+\begin{split}
+  \gamma_4 - \phi_1 \gamma_{3} - \phi_2 \gamma_{2} - \phi_3 \gamma_1 - \phi_4 \gamma_0 &= 0
+\end{split}
+$$
+
+$$
+\begin{split}
+  \gamma_4 &= \sigma_e^2 \sum_{j = 4}^3 \theta_{j} \psi_{j - 4} + \sum_{j = 1}^4 \phi_{j} \gamma_{4 - j} \\
+  \gamma_3 &= \sigma_e^2 \sum_{j = 4}^3 \theta_{j} \psi_{j - 4} + \sum_{j = 1}^4 \phi_{j} \gamma_{3 - j} \\
+  \gamma_2 &= \sigma_e^2 \sum_{j = 4}^3 \theta_{j} \psi_{j - 4} + \sum_{j = 1}^4 \phi_{j} \gamma_{2 - j} \\
+  \gamma_1 &= \sigma_e^2 \sum_{j = 4}^3 \theta_{j} \psi_{j - 4} + \sum_{j = 1}^4 \phi_{j} \gamma_{1 - j} \\
+  \gamma_0 &= \sigma_e^2 \sum_{j = 4}^3 \theta_{j} \psi_{j - 4} + \sum_{j = 1}^4 \phi_{j} \gamma_{0 - j} \\
+\end{split}
+$$
+
+## (c) Find a recursive equation for $\rho_k$ for $k \geq 5$.
+
+$$
+\begin{split}
+  \rho_k &= \phi_1 \rho_{k - 1} + \phi_2 \rho_{k - 2} + \hdots + \phi_p \rho_{k - p} \text{ for } k > q \\
+\end{split}
+$$
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+
+# 4. Consider the following model:
+
+$$
+  Y_t = 0.9 Y_{t - 4} + e_t - 0.5 e_{t - 1}
+$$
+
+## (a) Find the autocorrelation function, and evaluate $\rho_1, \rho_2, \rho_3$, and $\rho_4$.
+
+
+$$
+\begin{split}
+%  \gamma_0 &= Var(Y_t) = Var(0.9 Y_{t - 4} + e_t - 0.5 e_{t - 1}) \\
+%  &= Var(0.9 Y_{t - 4}) + Var(e_t) - Var(0.5 e_{t - 1}) \\
+%  &= Var(0.9 Y_{t - 4}) + Var(e_t) - Var(0.5 e_{t - 1}) \\
+%  &= 0.81 Var(Y_{t - 4}) + \sigma_e^2 - 0.25 \sigma_e^2 \\
+%  &= 0.81 Var(Y_{t - 4}) + 0.75 \sigma_e^2 \\
+%  \gamma_1 &= Cov(Y_t, Y_{t - 1}) = Cov(0.9 Y_{t - 4} + e_t - 0.5 e_{t - 1}, 0.9 Y_{t - 5} + e_{t - 1} - 0.5 e_{t - 2}) \\
+%  &= Cov(0.9 Y_{t - 4}, 0.9 Y_{t - 5}) \\
+%  &+ Cov(0.9 Y_{t - 4}, e_{t - 1}) \\
+%  &+ Cov(0.9 Y_{t - 4}, 0.5 e_{t - 2}) \\
+%  &+ Cov(e_t, 0.9 Y_{t - 5}) \\
+%  &+ Cov(e_t, e_{t - 1}) \\
+%  &+ Cov(e_t, 0.5 e_{t - 2}) \\
+%  &+ Cov(0.5 e_{t - 1}, 0.9 Y_{t - 5}) \\
+%  &+ Cov(0.5 e_{t - 1}, e_{t - 1}) \\
+%  &+ Cov(0.5 e_{t - 1}, 0.5 e_{t - 2}) \\
+\end{split}
+$$
+```{r}
+acf4 <- ARMAacf(ar=c(0, 0, 0, 0.9), ma=c(0.5))
+acf4
+acf4 <- acf4[-1]
+plot(acf4, type='h')
+abline(h=0)
+points(acf4, type='p')
+
+rho1 <- acf4[1]
+rho2 <- acf4[2]
+rho3 <- acf4[3]
+rho4 <- acf4[4]
+```
+
+$$
+\begin{split}
+  \rho_k &=
+    \begin{cases}
+      1 &, k = 0  \\
+      `r rho1` &, k = 1  \\
+      `r rho2` &, k = 2  \\
+      `r rho3` &, k = 3  \\
+      `r rho4` &, k = 4  \\
+      0 &, k > 4  \\
+    \end{cases} \\
+\end{split}
+$$
+
+## (b) Find the partial autocorrelation function, and evaluate $\phi_{11}, \phi_{22}, \phi_{33}$, and $\phi_{44}$. Show all working.
+
+```{r}
+pacf4 <- ARMAacf(ar=c(0, 0, 0, 0.9), ma=c(0.5), pacf=TRUE)
+pacf4
+plot(pacf4, type='h')
+abline(h=0)
+points(pacf4, type='p')
+
+phi11 <- pacf4[1]
+phi22 <- pacf4[2]
+phi33 <- pacf4[3]
+phi44 <- pacf4[4]
+```
+
+$$
+\begin{split}
+  \phi_{11} &= `r phi11` \\
+  \phi_{22} &= `r phi22` \\
+  \phi_{33} &= `r phi33` \\
+  \phi_{44} &= `r phi44` \\
+\end{split}
+$$
+
+
+## (c) Suppose that we have 100 observations generated by this process. If the last 5 observations were 24, 17, 18, 20, and 25 with corresponding residuals 0, 1, 0, -1, and 1, compute the forecasts for the next 5 observations.
+
+From equation 9.3.28, we get
+$$
+\begin{split}
+  \hat{Y}_{t}(1) &= \phi_1 \hat{Y}_t(0) + \phi_2 \hat{Y}_t(-1) + \phi_3 \hat{Y}_t(-2) + \phi_4 \hat{Y}_t(-3) + \theta_0 - \theta_1 E[e_{t - 1} | Y_t, Y_2, Y_3, Y_4] \\
+  &= 0.9 (18) - 0.5 \\
+  &= `r 0.9 * (18) - 0.5 ` \\
+\end{split}
+$$
+
+Once we have $\hat{Y}_{t}(1)$, we can use equation 9.3.30 in conjunction with this and obtain the general values for arbitrary $\hat{Y}_{t}(l)$.
+
+$$
+\begin{split}
+  \hat{Y}_{t}(1) &= \phi \hat{Y}_t + \theta_0 - \theta e_t \\
+  \hat{Y}_{t}(l) &= \phi \hat{Y}_t(l - 1) + \theta_0 \\
+  \hat{Y}_{t}(2) &= 0.9 (13.5) + 1 \\
+  &= `r 0.9 * 13.5 + 1` \\
+  \hat{Y}_{t}(3) &= 0.9 (13.15) + 1 \\
+  &= `r 0.9 * 12.835 + 1` \\
+  \hat{Y}_{t}(4) &= 0.9 (13.15) + 1 \\
+  &= `r 0.9 * 12.5515 + 1` \\
+  \hat{Y}_{t}(5) &= 0.9 (13.15) + 1 \\
+  &= `r 0.9 * 12.29635 + 1` \\
+\end{split}
+$$
+
+## (d) If $\sigma_e^2 = 1$, calculate the variance of each of the forecasts made in (4c)
+
+Using 9.3.38, we have $Var(e_t(l)) = \sigma_e^2 \sum_{j = 0}^{l - 1} \psi_j^2$ for $l \geq 1$.
+
+We need the $\psi$-weights, so we can obtain them from
+
+```{r}
+ARMAtoMA(ar=c(0, 0, 0, 0.9), ma=c(0.5), lag.max=5)
+```
+
+So we have
+
+$$
+\begin{split}
+  \psi_0 &= 1 \\
+  \psi_1 &= 0.5 \\
+  \psi_2 &= 0 \\
+  \psi_3 &= 0 \\
+  \psi_4 &= 0.9 \\
+  \psi_5 &= 0.45 \\
+\end{split}
+$$
+
+Which gives us
+
+### Variance for 1 Day Out
+$$
+\begin{split}
+  \psi_0^2 &= 1^2 \\
+  &= 1 \\
+\end{split}
+$$
+
+### Variance for 2 Days Out
+$$
+\begin{split}
+  \sum_{j = 0}^1 \psi_j^2 &= 1 + (0.5)^2 + 0 \\
+  &= 1.25 \\
+\end{split}
+$$
+
+### Variance for 3 Days Out
+$$
+\begin{split}
+  \sum_{j = 0}^2 \psi_j^2 &= 1 + (0.5)^2 + 0 + 0 \\
+  &= 1.25 \\
+\end{split}
+$$
+
+### Variance for 4 Days Out
+$$
+\begin{split}
+  \sum_{j = 0}^3 \psi_j^2 &= 1 + (0.5)^2 + 0 + 0 \\
+  &= 1.25 \\
+\end{split}
+$$
+
+### Variance for 4 Days Out
+$$
+\begin{split}
+  \sum_{j = 0}^4 \psi_j^2 &= 1 + (0.5)^2 + 0 + 0 + (0.9)^2 \\
+  &= 1 + 0.25 + 0.81 = 2.06 \\
+\end{split}
+$$
+
+## (e) Calculate 95% prediction limits for each of your forecasts.
+
+### Prediction Limits for 1 Day Out
+
+$$
+  (`r (0.9 * (18) - 0.5) - (1.96 * 1)`, `r (0.9 * (18) - 0.5) + (1.96 * 1)`)
+$$
+
+### Prediction Limits for 2 Day Out
+$$
+  (`r (0.9 * 13.5 + 1) - (1.96 * 1.25)`, `r (0.9 * 13.5 + 1) + (1.96 * 1.25)`)
+$$
+
+### Prediction Limits for 3 Day Out
+$$
+  (`r (0.9 * 12.835 + 1) - (1.96 * 1.25)`, `r (0.9 * 12.835 + 1) + (1.96 * 1.25)`)
+$$
+
+### Prediction Limits for 4 Day Out
+$$
+  (`r (0.9 * 12.5515 + 1) - (1.96 * 1.25)`, `r (0.9 * 12.5515 + 1) + (1.96 * 1.25)`)
+$$
+
+### Prediction Limits for 5 Day Out
+$$
+  (`r (0.9 * 12.29635 + 1) - (1.96 * 2.06)`, `r (0.9 * 12.29635 + 1) + (1.96 * 1.25)`)
+$$
+
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
+
+# 5. The file "\texttt{FinalExam.RData}" contains three datasets: \texttt{y1, y2}, and \texttt{y3}. You can load the data into \textsf{R} using the command \texttt{load("FinalExam.RData")}. Note: If you fit a model and later decide that the model is unsuitable, do not remove the model from your answer. Include it, discuss why it was unsuitable, and then move on the another model.
+
+```{r}
+load("FinalExam.RData")
+```
+
+## (a) Fit and appropriate model to \texttt{y1}. Use the third and fourth Bootstrap resampling methods to get the 95% confidence intervals for the parameters in your model.
+
+The first thing we always do when fitting a model is to visualize the data. This time series doesn't look immediately stationary.
+
+```{r}
+autoplot(y1)
+adf.test(y1)
+```
+
+An augmented Dickey-Fuller test results in a p-value of 0.04, but we can possibly do a little better with a log difference.
+
+```{r}
+y1.log.diff <- diff(log(y1))
+autoplot(y1.log.diff) + labs(title="First Difference of Y1")
+adf.test(y1.log.diff)
+```
+
+This series looks much more stationary, and the ADF test gives us a very small p-value.
+
+Now we can use \texttt{armasubsets()} and \texttt{auto.arima()} to obtain the best ARMA model for the first difference.
+
+```{r}
+subs <- armasubsets(y1.log.diff, nar = 8, nma = 8)
+plot(subs)
+auto.arima(y1.log.diff)
+```
+
+\texttt{armasubsets()} gives us a best fit of MA(2) on the log difference, whereas \texttt{auto.arima()} gives ARMA(1, 1).
+
+```{r}
+f1 <- Arima(y=y1.log.diff, order = c(1, 0, 1))
+f1
+f2 <- Arima(y=y1.log.diff, order = c(0, 0, 2))
+f2
+```
+
+Looking at the AICs for both of these models, we can see that the ARMA(1, 1) for the log difference gives us the lower AIC, so we will prefer this model.
+
+We'll bootstrap the data to get a confidence interval for our parameters.
+
+### Bootstrap Method 3
+
+```{r, fig.align='center', fig.height=4, fig.width=5, warning=FALSE}
+sims <- 1000
+data.points <- 1000
+b3.phi1.sim <- rep(NA, sims)
+b3.theta1.sim <- rep(NA, sims)
+b3.mu.sim <- rep(NA, sims)
+b3.sigmae2.sim <- rep(NA, sims)
+
+b3 <- y1.log.diff
+y1.order <- c(1, 0, 1)
+f <- arima(b3, order=y1.order)
+coef <- f$coef
+
+for (j in 1:sims) {
+
+  b3 <- arima.sim(n=data.points, model=list(order=y1.order, ar=coef[1], ma=coef[2], sd=sqrt(f$sigma2)))
+  b3 <- b3[-(1:(data.points-length(y1)))]
+
+  f1 <- arima(b3, order=y1.order, method="ML")
+  
+  b3.phi1.sim[j] <- f1$coef[[1]]
+  b3.theta1.sim[j] <- f1$coef[[2]]
+  b3.mu.sim[j] <- mean(b3)
+  b3.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b3.phi1.sim, main="Bootstrap Method 3, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b3.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b3.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b3.theta1.sim, main="Bootstrap Method 3, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b3.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b3.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b3.mu.sim, main="Bootstrap Method 3, Mu", breaks=100)
+mu.ci.lower <- quantile(b3.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b3.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+hist(exp(b3.sigmae2.sim), main="Bootstrap Method 3, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(exp(b3.sigmae2.sim), c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(exp(b3.sigmae2.sim), c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \phi_1 &: (`r phi1.ci.lower`, `r phi1.ci.upper`) \\
+  \theta_1 &: (`r theta1.ci.lower`, `r theta1.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+\pagebreak
+
+
+### Bootstrap Method 4
+
+```{r, fig.align='center', fig.height=4, fig.width=5, warning=FALSE}
+
+b4.phi1.sim <- rep(NA, sims)
+b4.theta1.sim <- rep(NA, sims)
+b4.mu.sim <- rep(NA, sims)
+b4.sigmae2.sim <- rep(NA, sims)
+
+b4 <- y1.log.diff
+y1.order <- c(1, 0, 1)
+f <- arima(b4, order=y1.order)
+coef <- f$coef
+
+for (j in 1:sims) {
+ 
+  b4 <- arima.sim(n=data.points, 
+                  model=list(ar=coef[1], ma=coef[2], order=y1.order), 
+                  rand.gen=function(n, r=f$residuals){ sample(r, n, replace=TRUE) })
+  b4 <- b4[-(1:(data.points-length(y1)))]
+  
+  f1 <- arima(b4, order=y1.order, method="ML")
+  b4.phi1.sim[j] <- f1$coef[[1]]
+  b4.theta1.sim[j] <- f1$coef[[2]]
+  b4.mu.sim[j] <- mean(b4)
+  b4.sigmae2.sim[j] <- var(resid(f1))
+  
+}
+
+hist(b4.phi1.sim, main="Bootstrap Method 4, Phi 1", breaks=100)
+phi1.ci.lower <- quantile(b4.phi1.sim, c(0.025,0.975))[[1]]
+phi1.ci.upper <- quantile(b4.phi1.sim, c(0.025,0.975))[[2]]
+abline(v=phi1.ci.lower, col="red")
+abline(v=phi1.ci.upper, col="red")
+
+hist(b4.theta1.sim, main="Bootstrap Method 4, Theta 1", breaks=100)
+theta1.ci.lower <- quantile(b4.theta1.sim, c(0.025,0.975))[[1]]
+theta1.ci.upper <- quantile(b4.theta1.sim, c(0.025,0.975))[[2]]
+abline(v=theta1.ci.lower, col="red")
+abline(v=theta1.ci.upper, col="red")
+
+hist(b4.mu.sim, main="Bootstrap Method 4, Mu", breaks=100)
+mu.ci.lower <- quantile(b4.mu.sim, c(0.025,0.975))[[1]]
+mu.ci.upper <- quantile(b4.mu.sim, c(0.025,0.975))[[2]]
+abline(v=mu.ci.lower, col="red")
+abline(v=mu.ci.upper, col="red")
+
+b4.sigmae2.backtransformed.sim <- exp(b4.sigmae2.sim)
+hist(b4.sigmae2.backtransformed.sim, main="Bootstrap Method 4, Sigma_e^2", breaks=100)
+sigmae2.ci.lower <- quantile(b4.sigmae2.backtransformed.sim, c(0.025,0.975))[[1]]
+sigmae2.ci.upper <- quantile(b4.sigmae2.backtransformed.sim, c(0.025,0.975))[[2]]
+abline(v=sigmae2.ci.lower, col="red")
+abline(v=sigmae2.ci.upper, col="red")
+
+```
+
+We have the following 95% confidence intervals:
+
+$$
+\begin{split}
+  \phi_1 &: (`r phi1.ci.lower`, `r phi1.ci.upper`) \\
+  \theta_1 &: (`r theta1.ci.lower`, `r theta1.ci.upper`) \\
+  \mu &: (`r mu.ci.lower`, `r mu.ci.upper`) \\
+  \sigma_e^2 &: (`r sigmae2.ci.lower`, `r sigmae2.ci.upper`) \\
+\end{split}
+$$
+
+
+## (b) Fit an appropriate model to \texttt{y2}. Predict the next 10 observations with 95% prediction limits.
+
+```{r}
+autoplot(y2)
+acf(y2, lag.max = 60)
+pacf(y2)
+```
+
+It is clear we have a seasonal model here, but there are some problematic lags in the PACF. We'll get some help from the \texttt{auto.arima()} to get a starting model.
+
+```{r}
+fit <- auto.arima(y2)
+fit
+# fit <- Arima(y2, order = c(1, 1, 3), seasonal=list(order=c(0, 0, 2), period=12) )
+
+tsdisplay(residuals(fit))
+y2.df <- data.frame(index=index(y2), 
+                    value=coredata(y2), 
+                    fitted=fitted(fit),
+                    resid.stand=rstandard(fit))
+```
+
+\texttt{auto.arima()} suggests an ARIMA$(1, 1, 3) \times (0, 0, 2)_{12}$.
+
+```{r}
+ggplot(y2.df, aes(x=index, y=value)) +
+  geom_line(col="blue") +
+  geom_line(aes(x=index, y=fitted), col="red")
+```
+
+We can do an analysis on the residuals to verify our model:
+
+```{r}
+ggplot(y2.df, aes(x=index, y=resid.stand)) +
+  geom_line(col="blue") +
+  labs(title="Standardized Residuals for y2")
+
+acf(y2.df$resid.stand)
+pacf(y2.df$resid.stand)
+
+ggplot(y2.df, aes(x=resid.stand)) +
+  geom_histogram(bins = 30)
+
+shapiro.test(y2.df$resid.stand)
+Box.test(y2.df$resid.stand, type = "Ljung")
+```
+
+Unfortunately, we have some significant autocorrelation in the residuals, so this model is not perfect, but performing a Shapiro-Wilk and Ljung-Box test suggest that they are iid normal.
+
+Now we will predict the next 10 observations with 95% prediction limits:
+
+```{r}
+pred <- forecast(y2, model = fit, h = 10)
+
+pred.df <- data.frame(index=index(pred$upper), mean=coredata(pred$mean), lower=coredata(pred$lower[,2]), upper=coredata(pred$upper[,2]))
+
+pred.df
+
+ggplot(y2.df, aes(x=index)) +
+  geom_line(aes(y=value), col="blue") +
+  geom_line(aes(y=fitted), col="red") +
+  geom_ribbon(data = pred.df,
+              aes(ymin=lower, ymax=upper), 
+              fill = 'grey70') +
+  geom_smooth(data = pred.df, 
+              aes(y=mean),
+              colour='red', 
+              stat='identity') 
+```
+
+## (c) \texttt{y3} is a data frame containing two time series \texttt{y3a} and \texttt{y3b}.
+
+```{r}
+
+y3 <- cbind(index=index(ts(y3)), y3)
+
+ggplot(y3, aes(x=index, y=y3a)) +
+  geom_line(col="red") +
+  geom_line(aes(x=index, y=y3b), col="blue") +
+  labs(title="y3a (red) and y3b (blue)")
+```
+
+### i. Ignore \texttt{y3a} and fit an appropriate model to \texttt{y3b}. Forecast the next 4 observations wtih 95% prediction limits.
+
+```{r, warning=FALSE}
+y3b <- ts(data = y3$y3b, start=1, end=length(y3$y3b))
+ggplot(y3, aes(x=index)) +
+  geom_line(aes(y=y3b)) +
+  geom_smooth(aes(y=y3b), method = "loess")
+
+acf(y3b, lag.max=30)
+pacf(y3b, lag.max=30)
+
+adf.test(y3b)
+```
+
+Although the ADF test shows it to be stationary, it doesn't immediately look like it is.
+
+
+```{r}
+
+subs <- armasubsets(y3b, nar = 10, nma = 10)
+plot(subs)
+```
+
+The \texttt{armasubsets()} plot suggests an ARMA(7, 10).
+
+```{r}
+ar1 <- NA
+ar2 <- 0
+ar3 <- 0
+ar4 <- 0
+ar5 <- 0
+ar6 <- NA
+ar7 <- NA
+
+ma1 <- 0
+ma2 <- 0
+ma3 <- 0
+ma4 <- 0
+ma5 <- NA
+ma6 <- NA
+ma7 <- 0
+ma8 <- 0
+ma9 <- 0
+ma10 <- NA
+intercept <- NA
+
+fit <- Arima(y3b,
+             order = c(7, 0, 10), 
+             method = "ML", 
+             fixed = c(ar1, ar2, ar3, ar4, ar5, ar6, ar7,
+                       ma1, ma2, ma3, ma4, ma5, ma6, ma7, ma8, ma9, ma10,
+                       intercept),
+             transform.pars = FALSE)
+
+tsdisplay(residuals(fit))
+y3b.df <- data.frame(index=index(y3b), 
+                     value=coredata(y3b), 
+                     fitted=fitted(fit),
+                     resid.stand=rstandard(fit))
+
+ggplot(y3b.df, aes(x=index, y=value)) +
+  geom_line(col="blue") +
+  geom_line(aes(x=index, y=fitted), col="red")
+
+pred <- forecast(y3b, model=fit, h=4)
+
+pred.df <- data.frame(index=index(pred$upper), mean=coredata(pred$mean), lower=coredata(pred$lower[,2]), upper=coredata(pred$upper[,2]))
+
+pred.df
+
+ggplot(y3b.df, aes(x=index)) +
+  geom_line(aes(y=value), col="blue") +
+  geom_line(aes(y=fitted), col="red") +
+  geom_ribbon(data = pred.df,
+              aes(ymin=lower, ymax=upper), 
+              fill = 'grey70') +
+  geom_smooth(data = pred.df, 
+              aes(y=mean),
+              colour='red', 
+              stat='identity') 
+
+```
+
+### ii. Are \texttt{y3a} and \texttt{y3b} correlated? If so, at what lags?
+
+```{r}
+
+ggplot(y3, aes(x=index)) +
+  geom_line(aes(y=log(y3b)), col="red") +
+  geom_line(aes(y=log(y3a)), col="blue") +
+  labs(title="y3b (red) and y3a (blue)")
+
+ccf(y3$y3b, y3$y3a, lag.max = 30, type = c("correlation"))
+```
+
+The cross-correlation is strongest at lag 2.
+
+```{r}
+
+y3b.backshift2 <- y3$y3b[2:length(y3$y3b)]
+length(y3b.backshift2)
+y3a.mod <- y3$y3a[1:(length(y3$y3a) - 1)]
+y3a.mod
+fit <- lm(y3a.mod ~ y3b.backshift2)
+plot(y3b.backshift2, y3a.mod, main="Correlation beteween y3b (backshift 2) and y3a")
+abline(fit, col="red")
+summary(fit)
+```
+
+### iii. (Extra bonus) Fit an appropriate model to \texttt{y3b} using \texttt{y3a}. Forecast the next 4 observations with 95% prediction limits.
+
+In order to get \texttt{y3a} to look like \texttt{y3b}, we need to get them both on the same scale and do some transformation.
+
+We'll first take the log of each, which will bring them on the same scale, then we'll add the mean of the difference to \texttt{y3a} to bring them to nearly equal values.
+
+Let $X_t$ represent \texttt{y3b} and $Y_t$ represent \texttt{y3a}.
+$$
+\begin{split}
+  Y_{t}^{\prime} &= log(Y_t) + \frac{\sum_{i = 1}^n (log(X_t) - log(Y_i)) }{n} \\
+\end{split}
+$$
+
+We know that \texttt{y3a} is correlated with \texttt{y3b} at lag 2, so we just need to shift \texttt{y3a} forward by 2. There are various ways we can handle this, but we'll prepend the first two values of \texttt{y3b} to \texttt{y3a} and discard the last 2. 
+
+```{r}
+
+y3$y3b.log <- log(y3$y3b)
+y3$y3a.log <- log(y3$y3a)
+y3$y3a.mod.log <- y3$y3a.log + mean(y3$y3b.log - y3$y3a.log)
+
+y3$y3a.mod.log[1:length(y3$y3a.mod.log)]
+y3$y3a.mod.log[1:(length(y3$y3a.mod.log) - 2)]
+
+y3$y3a.mod.log.shift <- c(y3$y3b.log[1:2], y3$y3a.mod.log[1:(length(y3$y3a.mod.log) - 2)])
+
+ggplot(y3, aes(x=index)) +
+  geom_line(aes(y=y3b.log), col="red") +
+  geom_line(aes(y=y3a.mod.log.shift), col="blue") +
+  labs(title="y3b (red) and y3a (blue)")
+```
+
+This looks pretty good. Now we can fit a model to our transformed \texttt{y3a} and overlay it on \texttt{y3b}.
+
+```{r}
+fit <- armasubsets(ts(y3$y3a.mod.log.shift), nar=10, nma=10)
+
+ar1 <- NA
+ar2 <- 0
+ar3 <- 0
+ar4 <- 0
+ar5 <- 0
+ar6 <- NA
+ar7 <- NA
+ar8 <- NA
+ar9 <- NA
+ar10 <- NA
+
+ma1 <- 0
+ma2 <- 0
+ma3 <- 0
+ma4 <- 0
+ma5 <- NA
+ma6 <- NA
+ma7 <- 0
+intercept <- NA
+
+fit <- Arima(ts(y3$y3a.mod.log.shift),
+             order = c(10, 0, 7), 
+             method = "ML", 
+             fixed = c(ar1, ar2, ar3, ar4, ar5, ar6, ar7, ar8, ar9, ar10,
+                       ma1, ma2, ma3, ma4, ma5, ma6, ma7,
+                       intercept),
+             transform.pars = FALSE)
+
+tsdisplay(residuals(fit))
+y3a.df <- data.frame(index=index(y3$index), 
+                     value=y3$y3b, 
+                     fitted=fitted(fit),
+                     resid.stand=rstandard(fit))
+
+ggplot(y3b.df, aes(x=index, y=value)) +
+  geom_line(col="blue") +
+  geom_line(aes(x=index, y=fitted), col="red") +
+  labs("y3b fitted from a transformed y3a model")
+
+pred <- forecast(ts(y3$y3b.log), model=fit, h=4)
+
+pred.df <- data.frame(index=index(pred$upper), mean=coredata(pred$mean), lower=coredata(pred$lower[,2]), upper=coredata(pred$upper[,2]))
+
+exp(pred.df[,-1])
+
+ggplot(y3a.df, aes(x=index)) +
+  geom_line(aes(y=value), col="blue") +
+  geom_line(aes(y=exp(fitted)), col="red") +
+  geom_ribbon(data = pred.df,
+              aes(ymin=exp(lower), ymax=exp(upper)),
+              fill = 'grey70') +
+  geom_smooth(data = pred.df, 
+              aes(y=exp(mean)),
+              colour='red', 
+              stat='identity') 
+```
+
+\begin{flushright}
+  $\blacksquare$
+\end{flushright}
+
+\pagebreak
